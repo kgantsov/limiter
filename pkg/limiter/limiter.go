@@ -43,7 +43,7 @@ func (l *RateLimiter) AddLimiter(key string, max_tokens int64, refill_time int64
 func (l *RateLimiter) Reduce(key string, tokens int64) (int64, error) {
 	l.mu.RLock()
 	bucket, ok := l.Buckets[key]
-	l.mu.Unlock()
+	l.mu.RUnlock()
 
 	if !ok {
 		return 0, fmt.Errorf("Bucket `%s` does not exist", key)
