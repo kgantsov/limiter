@@ -16,58 +16,58 @@ func assetEqual(t *testing.T, expected, actual interface{}) {
 func TestSlowRateLimiter(t *testing.T) {
 
 	rl := NewRateLimiter()
-	rl.AddLimiter("login", 5, 2, 5)
+	// rl.AddLimiter("login", 5, 2, 5)
 
-	val, _ := rl.Reduce("login", 1)
+	val, _ := rl.Reduce("login", 5, 2, 5, 1)
 	assetEqual(t, int64(4), val)
-	val, _ = rl.Reduce("login", 1)
+	val, _ = rl.Reduce("login", 5, 2, 5, 1)
 	assetEqual(t, int64(3), val)
-	val, _ = rl.Reduce("login", 1)
+	val, _ = rl.Reduce("login", 5, 2, 5, 1)
 	assetEqual(t, int64(2), val)
-	val, _ = rl.Reduce("login", 1)
+	val, _ = rl.Reduce("login", 5, 2, 5, 1)
 	assetEqual(t, int64(1), val)
-	val, _ = rl.Reduce("login", 1)
+	val, _ = rl.Reduce("login", 5, 2, 5, 1)
 	assetEqual(t, int64(0), val)
-	val, _ = rl.Reduce("login", 1)
+	val, _ = rl.Reduce("login", 5, 2, 5, 1)
 	assetEqual(t, int64(-1), val)
 	time.Sleep(2 * time.Second)
 
-	val, _ = rl.Reduce("login", 1)
+	val, _ = rl.Reduce("login", 5, 2, 5, 1)
 	assetEqual(t, int64(4), val)
-	val, _ = rl.Reduce("login", 1)
+	val, _ = rl.Reduce("login", 5, 2, 5, 1)
 	assetEqual(t, int64(3), val)
-	val, _ = rl.Reduce("login", 1)
+	val, _ = rl.Reduce("login", 5, 2, 5, 1)
 	assetEqual(t, int64(2), val)
-	val, _ = rl.Reduce("login", 1)
+	val, _ = rl.Reduce("login", 5, 2, 5, 1)
 	assetEqual(t, int64(1), val)
-	val, _ = rl.Reduce("login", 1)
+	val, _ = rl.Reduce("login", 5, 2, 5, 1)
 	assetEqual(t, int64(0), val)
-	val, _ = rl.Reduce("login", 1)
+	val, _ = rl.Reduce("login", 5, 2, 5, 1)
 	assetEqual(t, int64(-1), val)
 	time.Sleep(2 * time.Second)
 
-	val, _ = rl.Reduce("login", 1)
+	val, _ = rl.Reduce("login", 5, 2, 5, 1)
 	assetEqual(t, int64(4), val)
 }
 
 func TestFastRateLimiter(t *testing.T) {
 
 	rl := NewRateLimiter()
-	rl.AddLimiter("api_call", 1000, 1, 1000)
+	// rl.AddLimiter("api_call", 1000, 1, 1000)
 
 	for i := 999; i >= 0; i-- {
-		val, _ := rl.Reduce("api_call", 1)
+		val, _ := rl.Reduce("api_call", 1000, 1, 1000, 1)
 		assetEqual(t, int64(i), val)
 	}
-	val, _ := rl.Reduce("api_call", 1)
+	val, _ := rl.Reduce("api_call", 1000, 1, 1000, 1)
 	assetEqual(t, int64(-1), val)
 
 	time.Sleep(1 * time.Second)
 
 	for i := 999; i >= 0; i-- {
-		val, _ := rl.Reduce("api_call", 1)
+		val, _ := rl.Reduce("api_call", 1000, 1, 1000, 1)
 		assetEqual(t, int64(i), val)
 	}
-	val, _ = rl.Reduce("api_call", 1)
+	val, _ = rl.Reduce("api_call", 1000, 1, 1000, 1)
 	assetEqual(t, int64(-1), val)
 }

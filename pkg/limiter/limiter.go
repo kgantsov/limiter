@@ -1,7 +1,6 @@
 package limiter
 
 import (
-	"fmt"
 	"math"
 	"sync"
 	"sync/atomic"
@@ -28,25 +27,22 @@ func NewRateLimiter() *RateLimiter {
 	return rateLimiter
 }
 
-func (l *RateLimiter) AddLimiter(key string, max_tokens int64, refill_time int64, refill_amount int64) {
-	l.mu.Lock()
-	l.Buckets[key] = &Bucket{
-		Value:        max_tokens,
-		MaxTokens:    max_tokens,
-		RefillTime:   refill_time,
-		RefillAmount: refill_amount,
-		LastUpdate:   time.Now().Unix(),
-	}
-	l.mu.Unlock()
-}
-
-func (l *RateLimiter) Reduce(key string, tokens int64) (int64, error) {
+func (l *RateLimiter) Reduce(key string, max_tokens int64, refill_time int64, refill_amount int64, tokens int64) (int64, error) {
 	l.mu.RLock()
 	bucket, ok := l.Buckets[key]
 	l.mu.RUnlock()
 
 	if !ok {
-		return 0, fmt.Errorf("Bucket `%s` does not exist", key)
+		bucket = &Bucket{
+			Value:        max_tokens,
+			MaxTokens:    max_tokens,
+			RefillTime:   refill_time,
+			RefillAmount: refill_amount,
+			LastUpdate:   time.Now().Unix(),
+		}
+		l.mu.Lock()
+		l.Buckets[key] = bucket
+		l.mu.Unlock()
 	}
 
 	now := time.Now().Unix()
