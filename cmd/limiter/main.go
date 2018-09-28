@@ -3,7 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"regexp"
+	"runtime"
 	"strconv"
+	"syscall"
 
 	"github.com/kgantsov/limiter/pkg/limiter"
 	log "github.com/sirupsen/logrus"
@@ -21,6 +26,7 @@ type RateLimiterParams struct {
 }
 
 func DefineRoutes(app *App, r *gin.Engine) {
+	r.GET("/stats/", app.Stat)
 	v1 := r.Group("/API/v1")
 	{
 		v1.GET("/limiter/:key/:max_tokens/:refill_time/:refill_amount/:tokens/", app.ReduceLimiter)
@@ -104,6 +110,34 @@ func (app *App) ReduceLimiter(c *gin.Context) {
 		})
 	}
 
+}
+
+func (app *App) Stat(c *gin.Context) {
+	var currentRSS int64
+
+	VmRSSRe := regexp.MustCompile(`VmRSS:\s+(\d+)\s+kB`)
+	pid := os.Getpid()
+
+	output, err := ioutil.ReadFile(fmt.Sprintf("/proc/%d/status", pid))
+	if err == nil {
+		result := VmRSSRe.FindStringSubmatch(string(output))
+		currentRSS, _ = strconv.ParseInt(result[1], 10, 64)
+	}
+
+	rusage := new(syscall.Rusage)
+	syscall.Getrusage(0, rusage)
+	userCPU := rusage.Utime.Sec*1e9 + int64(rusage.Utime.Usec)
+	maxRSS := float64(rusage.Maxrss)
+
+	c.JSON(
+		200,
+		gin.H{
+			"num_goroutines": runtime.NumGoroutine(),
+			"CPU":            userCPU,
+			"current_rss":    currentRSS,
+			"max_rss":        maxRSS,
+		},
+	)
 }
 
 func main() {
