@@ -16,7 +16,6 @@ func assetEqual(t *testing.T, expected, actual interface{}) {
 func TestSlowRateLimiter(t *testing.T) {
 
 	rl := NewRateLimiter()
-	// rl.AddLimiter("login", 5, 2, 5)
 
 	val, _ := rl.Reduce("login", 5, 2, 5, 1)
 	assetEqual(t, int64(4), val)
@@ -53,7 +52,6 @@ func TestSlowRateLimiter(t *testing.T) {
 func TestFastRateLimiter(t *testing.T) {
 
 	rl := NewRateLimiter()
-	// rl.AddLimiter("api_call", 1000, 1, 1000)
 
 	for i := 999; i >= 0; i-- {
 		val, _ := rl.Reduce("api_call", 1000, 1, 1000, 1)
