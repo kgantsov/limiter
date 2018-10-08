@@ -19,13 +19,11 @@ WORKDIR /usr/share/zoneinfo
 # tz loader doesn't handle compressed data.
 RUN zip -r -0 /zoneinfo.zip .
 
-FROM alpine
-
-RUN apk add -U bash
+FROM scratch
 
 ENV ZONEINFO /zoneinfo.zip
 COPY --from=alpine /zoneinfo.zip /
 
-COPY --from=builder /app /
+COPY --from=builder /app ./
 COPY --from=alpine /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-ENTRYPOINT ["/app"]
+ENTRYPOINT ["./app"]
