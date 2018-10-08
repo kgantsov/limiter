@@ -35,8 +35,10 @@ func ListenAndServe(app *App, port int, debug bool) {
 
 	if debug {
 		gin.SetMode(gin.DebugMode)
+		log.SetLevel(log.DebugLevel)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
+		log.SetLevel(log.InfoLevel)
 	}
 
 	r := gin.New()
@@ -127,6 +129,7 @@ func (app *App) Stat(c *gin.Context) {
 
 func main() {
 	port := flag.Int("port", 9000, "Port")
+	debug := flag.Bool("debug", false, "Debug flag")
 
 	flag.Parse()
 
@@ -134,5 +137,5 @@ func main() {
 		RateLimiter: limiter.NewRateLimiter(),
 	}
 
-	ListenAndServe(app, *port, false)
+	ListenAndServe(app, *port, *debug)
 }
