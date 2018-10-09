@@ -5,6 +5,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Bucket struct {
@@ -28,6 +30,10 @@ func NewRateLimiter() *RateLimiter {
 }
 
 func (l *RateLimiter) Reduce(key string, max_tokens int64, refill_time int64, refill_amount int64, tokens int64) (int64, error) {
+	if log.GetLevel() == log.DebugLevel {
+		defer TimeTrack(time.Now(), "RateLimiter.Reduce")
+	}
+
 	l.mu.RLock()
 	bucket, ok := l.Buckets[key]
 	l.mu.RUnlock()
@@ -76,4 +82,9 @@ func (l *RateLimiter) Reduce(key string, max_tokens int64, refill_time int64, re
 	)
 
 	return bucket.Value, nil
+}
+
+func TimeTrack(start time.Time, name string) {
+	elapsed := time.Since(start)
+	log.Debugf("%s took %s", name, elapsed)
 }
