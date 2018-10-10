@@ -1,5 +1,7 @@
 # limiter
 
+![Build status](http://thekoss.ml:8000/api/badges/kgantsov/limiter/status.svg) 
+
 Limiter is a rate limiter application
 
 
