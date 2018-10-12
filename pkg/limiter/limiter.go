@@ -29,7 +29,7 @@ func NewRateLimiter() *RateLimiter {
 	return rateLimiter
 }
 
-func (l *RateLimiter) Reduce(key string, max_tokens int64, refill_time int64, refill_amount int64, tokens int64) (int64, error) {
+func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refillAmount int64, tokens int64) (int64, error) {
 	if log.GetLevel() == log.DebugLevel {
 		defer TimeTrack(time.Now(), "RateLimiter.Reduce")
 	}
@@ -40,10 +40,10 @@ func (l *RateLimiter) Reduce(key string, max_tokens int64, refill_time int64, re
 
 	if !ok {
 		bucket = &Bucket{
-			Value:        max_tokens,
-			MaxTokens:    max_tokens,
-			RefillTime:   refill_time,
-			RefillAmount: refill_amount,
+			Value:        maxTokens,
+			MaxTokens:    maxTokens,
+			RefillTime:   refillTime,
+			RefillAmount: refillAmount,
 			LastUpdate:   time.Now().Unix(),
 		}
 		l.mu.Lock()
