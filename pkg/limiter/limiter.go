@@ -49,6 +49,25 @@ func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refi
 		l.mu.Lock()
 		l.Buckets[key] = bucket
 		l.mu.Unlock()
+	} else {
+		if bucket.MaxTokens != maxTokens {
+			atomic.StoreInt64(
+				&bucket.MaxTokens,
+				maxTokens,
+			)
+		}
+		if bucket.RefillTime != refillTime {
+			atomic.StoreInt64(
+				&bucket.RefillTime,
+				refillTime,
+			)
+		}
+		if bucket.RefillAmount != refillAmount {
+			atomic.StoreInt64(
+				&bucket.RefillAmount,
+				refillAmount,
+			)
+		}
 	}
 
 	now := time.Now().Unix()
