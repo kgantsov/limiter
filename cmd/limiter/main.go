@@ -5,10 +5,12 @@ import (
 
 	http_server "github.com/kgantsov/limiter/pkg/http_server"
 	limiter "github.com/kgantsov/limiter/pkg/limiter"
+	redis_server "github.com/kgantsov/limiter/pkg/redis_server"
 )
 
 func main() {
-	port := flag.Int("port", 9000, "Port")
+	httpPort := flag.Int("http_port", 9000, "HTTP Port")
+	redisPort := flag.Int("redis_port", 46379, "Redis Port")
 	debug := flag.Bool("debug", false, "Debug flag")
 
 	flag.Parse()
@@ -17,5 +19,6 @@ func main() {
 		RateLimiter: limiter.NewRateLimiter(),
 	}
 
-	http_server.ListenAndServe(app, *port, *debug)
+	go redis_server.ListenAndServe(*redisPort, app.RateLimiter)
+	http_server.ListenAndServe(app, *httpPort, *debug)
 }
