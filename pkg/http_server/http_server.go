@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/gin-gonic/gin"
 	"github.com/kgantsov/limiter/pkg/limiter"
+	"gopkg.in/gin-gonic/gin.v1"
 
 	log "github.com/sirupsen/logrus"
 )
