@@ -128,6 +128,8 @@ func handleClient(rateLimiter *limiter.RateLimiter, conn net.Conn) {
 				} else {
 					conn.Write([]byte(fmt.Sprintf("$-1\r\n")))
 				}
+			case "PING":
+				conn.Write([]byte("+PONG\r\n"))
 			default:
 				conn.Write([]byte(fmt.Sprintf("-ERR unknown command '%s'\r\n", op)))
 			}
