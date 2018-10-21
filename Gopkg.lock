@@ -60,6 +60,12 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/tidwall/redbench"
+  packages = ["."]
+  revision = "637a608ebec1acbf049c2e4a5eda6c2d72aa3af1"
+
+[[projects]]
   name = "github.com/ugorji/go"
   packages = ["codec"]
   revision = "b4c50a2b199d93b13dc15e78929cfb23bfdf21ab"
@@ -101,6 +107,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fb62fc366c611c2b9cae84b87e6c05c8c207e409952b7c4d994e8484443082d7"
+  inputs-digest = "5f2a1e9b129dfac88ccfb9f0c3b0f65c9210c7cba803d0def77e8cff79352312"
   solver-name = "gps-cdcl"
   solver-version = 1
