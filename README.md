@@ -2,12 +2,12 @@
 
 ![Build status](http://thekoss.ml:8000/api/badges/kgantsov/limiter/status.svg) 
 
-Limiter is a rate limiter application
+Limiter is a rate limiter application that has http and redis interfaces
 
 
 ### Strart limiter service taht listens HTTP requests
 
-    ./limiter --port 3000
+    ./limiter --http_port=3000 --redis_port=46379
 
 
 ### Usage
