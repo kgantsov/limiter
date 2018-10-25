@@ -27,6 +27,6 @@ func benchmarkReduce(numberOfKeys int, maxTokens int64, refillTime int64, refill
 	}
 }
 
-func BenchmarkReduce_100_1000(b *testing.B) {
+func BenchmarkReduce_100_1000_1_1000_1(b *testing.B) {
 	benchmarkReduce(100, 1000, 1, 1000, 1, b)
 }
