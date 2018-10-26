@@ -23,3 +23,14 @@ Limiter is a rate limiter application that has http and redis interfaces
     Content-Length: 91
 
     {"key":"test","max_tokens":5,"refill_amount":5,"refill_time":10,"tokens":1,"tokens_left":4}
+
+
+### Benchmarks
+
+    > $ go test -run XXX -bench . -benchmem
+    goos: darwin
+    goarch: amd64
+    pkg: github.com/kgantsov/limiter/pkg/limiter
+    BenchmarkReduce_100_1000-4   	 3000000	       517 ns/op	       0 B/op	       0 allocs/op
+    PASS
+    ok  	github.com/kgantsov/limiter/pkg/limiter	110.840s
