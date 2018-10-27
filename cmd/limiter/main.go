@@ -17,6 +17,7 @@ func main() {
 
 	app := &http_server.App{
 		RateLimiter: limiter.NewRateLimiter(),
+		PathMap:     make(map[string]string),
 	}
 
 	go redis_server.ListenAndServe(*redisPort, app.RateLimiter)

@@ -3,6 +3,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/beorn7/perks"
+  packages = ["quantile"]
+  revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
+
+[[projects]]
+  branch = "master"
   name = "github.com/gin-contrib/sse"
   packages = ["."]
   revision = "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae"
@@ -10,6 +16,7 @@
 [[projects]]
   name = "github.com/gin-gonic/gin"
   packages = [
+    ".",
     "binding",
     "json",
     "render"
@@ -42,6 +49,12 @@
   version = "v0.0.4"
 
 [[projects]]
+  name = "github.com/matttproud/golang_protobuf_extensions"
+  packages = ["pbutil"]
+  revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
+  version = "v1.0.1"
+
+[[projects]]
   name = "github.com/modern-go/concurrent"
   packages = ["."]
   revision = "bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94"
@@ -52,6 +65,43 @@
   packages = ["."]
   revision = "4b7aa43c6742a2c18fdef89dd197aaae7dac7ccd"
   version = "1.0.1"
+
+[[projects]]
+  name = "github.com/prometheus/client_golang"
+  packages = [
+    "prometheus",
+    "prometheus/internal",
+    "prometheus/promhttp"
+  ]
+  revision = "1cafe34db7fdec6022e17e00e1c1ea501022f3e4"
+  version = "v0.9.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/client_model"
+  packages = ["go"]
+  revision = "5c3871d89910bfb32f5fcab2aa4b9ec68e65a99f"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/common"
+  packages = [
+    "expfmt",
+    "internal/bitbucket.org/ww/goautoneg",
+    "model"
+  ]
+  revision = "7e9e6cabbd393fc208072eedef99188d0ce788b6"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/procfs"
+  packages = [
+    ".",
+    "internal/util",
+    "nfs",
+    "xfs"
+  ]
+  revision = "185b4288413d2a0dd0806f78c90dde719829e5ae"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -73,6 +123,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/zsais/go-gin-prometheus"
+  packages = ["."]
+  revision = "f09dfa9cedec6f3e4ed39e49cceeda09cbed464f"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   revision = "e3636079e1a4c1f337f212cc5cd2aca108f6c900"
@@ -85,12 +141,6 @@
     "windows"
   ]
   revision = "219bb53033fb8511ee74a8375a3bc672a727bdce"
-
-[[projects]]
-  name = "gopkg.in/gin-gonic/gin.v1"
-  packages = ["."]
-  revision = "d459835d2b077e44f7c9b453505ee29881d5d12d"
-  version = "v1.2"
 
 [[projects]]
   name = "gopkg.in/go-playground/validator.v8"
@@ -107,6 +157,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5f2a1e9b129dfac88ccfb9f0c3b0f65c9210c7cba803d0def77e8cff79352312"
+  inputs-digest = "66e26ac686ee7cb63ca9453013b55ff4cad8938265daf29f33ebf2c0ece3f008"
   solver-name = "gps-cdcl"
   solver-version = 1
