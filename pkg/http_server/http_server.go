@@ -14,8 +14,9 @@ import (
 )
 
 type App struct {
-	RateLimiter *limiter.RateLimiter
-	PathMap     map[string]string
+	RateLimiter      *limiter.RateLimiter
+	PathMap          map[string]string
+	EnablePrometheus bool
 }
 
 type RateLimiterParams struct {
@@ -31,8 +32,10 @@ func DefineRoutes(app *App, r *gin.Engine) {
 		v1.GET("/limiter/:key/:max_tokens/:refill_time/:refill_amount/:tokens/", app.ReduceLimiter)
 	}
 
-	for _, ri := range r.Routes() {
-		app.PathMap[ri.Handler] = ri.Path
+	if app.EnablePrometheus {
+		for _, ri := range r.Routes() {
+			app.PathMap[ri.Handler] = ri.Path
+		}
 	}
 }
 
@@ -48,16 +51,19 @@ func ListenAndServe(app *App, port int, debug bool) {
 	}
 
 	r := gin.New()
-	p := ginprometheus.NewPrometheus("gin")
-	p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
-		if path, ok := app.PathMap[c.HandlerName()]; ok {
-			return path
+
+	if app.EnablePrometheus {
+		p := ginprometheus.NewPrometheus("gin")
+		p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
+			if path, ok := app.PathMap[c.HandlerName()]; ok {
+				return path
+			}
+
+			return ""
 		}
 
-		return ""
+		p.Use(r)
 	}
-
-	p.Use(r)
 
 	r.Use(gin.Recovery())
 
