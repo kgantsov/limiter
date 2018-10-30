@@ -52,6 +52,7 @@ func ListenAndServe(port int, rateLimiter *limiter.RateLimiter) {
 func handleClient(rateLimiter *limiter.RateLimiter, conn net.Conn) {
 	reader := bufio.NewReader(conn)
 	parser := newParser(reader)
+	responser := newResponser(conn)
 	defer conn.Close()
 
 	for {
@@ -60,8 +61,7 @@ func handleClient(rateLimiter *limiter.RateLimiter, conn net.Conn) {
 			if err == io.EOF {
 				log.Debug("Client has been disconnected")
 			} else if _, ok := err.(error); ok {
-				conn.Write([]byte(fmt.Sprintf("-ERR %s\r\n", err)))
-				log.Debug(fmt.Sprintf("-ERR %s\r\n", err))
+				responser.sendError(err)
 			} else {
 				log.Debug("Errror parsing command: %s", err)
 			}
@@ -72,7 +72,7 @@ func handleClient(rateLimiter *limiter.RateLimiter, conn net.Conn) {
 		case "REDUCE":
 			var maxTokens, refillTime, refillAmount, tokens int64
 			if len(cmd.Args) < 1 {
-				conn.Write([]byte("REDUCE expects 5 argument"))
+				responser.sendError(fmt.Errorf("REDUCE expects 5 argument"))
 				return
 			}
 
@@ -81,28 +81,29 @@ func handleClient(rateLimiter *limiter.RateLimiter, conn net.Conn) {
 			if val, err := strconv.ParseInt(cmd.Args[1], 10, 64); err == nil {
 				maxTokens = val
 			} else {
-				conn.Write([]byte(fmt.Sprintf("$-1\r\n")))
+				responser.sendError(fmt.Errorf("REDUCE expects maxTokens to be integer"))
 				continue
 			}
 
 			if val, err := strconv.ParseInt(cmd.Args[2], 10, 64); err == nil {
 				refillTime = val
 			} else {
-				conn.Write([]byte(fmt.Sprintf("$-1\r\n")))
+				// conn.Write([]byte(fmt.Sprintf("$-1\r\n")))
+				responser.sendError(fmt.Errorf("REDUCE expects refillTime to be integer"))
 				continue
 			}
 
 			if val, err := strconv.ParseInt(cmd.Args[3], 10, 64); err == nil {
 				refillAmount = val
 			} else {
-				conn.Write([]byte(fmt.Sprintf("$-1\r\n")))
+				responser.sendError(fmt.Errorf("REDUCE expects refillAmount to be integer"))
 				continue
 			}
 
 			if val, err := strconv.ParseInt(cmd.Args[4], 10, 64); err == nil {
 				tokens = val
 			} else {
-				conn.Write([]byte(fmt.Sprintf("$-1\r\n")))
+				responser.sendError(fmt.Errorf("REDUCE expects tokens to be integer"))
 				continue
 			}
 
@@ -111,14 +112,14 @@ func handleClient(rateLimiter *limiter.RateLimiter, conn net.Conn) {
 			)
 
 			if err == nil {
-				conn.Write([]byte(fmt.Sprintf(":%d\r\n", tokensLeft)))
+				responser.sendInt(tokensLeft)
 			} else {
-				conn.Write([]byte(fmt.Sprintf("$-1\r\n")))
+				responser.sendError(err)
 			}
 		case "PING":
-			conn.Write([]byte("+PONG\r\n"))
+			responser.sendPong()
 		default:
-			conn.Write([]byte(fmt.Sprintf("-ERR unknown command '%s'\r\n", cmd.Args)))
+			responser.sendError(fmt.Errorf("unknown command '%s'\r\n", cmd.Args))
 		}
 	}
 }
