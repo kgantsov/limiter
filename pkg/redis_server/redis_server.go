@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/kgantsov/limiter/pkg/limiter"
 
@@ -37,6 +38,8 @@ func ListenAndServe(port int, rateLimiter *limiter.RateLimiter) {
 	listener, err := net.ListenTCP("tcp", tcpAddr)
 	checkError(err)
 
+	metrics := NewMetrics("redis")
+
 	log.Info("Listening on port: ", port)
 
 	for {
@@ -45,11 +48,11 @@ func ListenAndServe(port int, rateLimiter *limiter.RateLimiter) {
 			log.Error("Fatal error: ", err.Error())
 			continue
 		}
-		go handleClient(rateLimiter, conn)
+		go handleClient(rateLimiter, metrics, conn)
 	}
 }
 
-func handleClient(rateLimiter *limiter.RateLimiter, conn net.Conn) {
+func handleClient(rateLimiter *limiter.RateLimiter, metrics *Metrics, conn net.Conn) {
 	reader := bufio.NewReader(conn)
 	parser := newParser(reader)
 	responser := newResponser(conn)
@@ -57,6 +60,9 @@ func handleClient(rateLimiter *limiter.RateLimiter, conn net.Conn) {
 
 	for {
 		cmd, err := parser.ParseCommand()
+		status := "OK"
+		start := time.Now()
+
 		if err != nil {
 			if err == io.EOF {
 				log.Debug("Client has been disconnected")
@@ -64,6 +70,7 @@ func handleClient(rateLimiter *limiter.RateLimiter, conn net.Conn) {
 				responser.sendError(err)
 			} else {
 				log.Debug("Errror parsing command: %s", err)
+				status = "PARSING_ERROR"
 			}
 			return
 		}
@@ -73,6 +80,7 @@ func handleClient(rateLimiter *limiter.RateLimiter, conn net.Conn) {
 			var maxTokens, refillTime, refillAmount, tokens int64
 			if len(cmd.Args) < 1 {
 				responser.sendError(fmt.Errorf("REDUCE expects 5 argument"))
+				status = "ARGUMENT_ERROR"
 				return
 			}
 
@@ -82,6 +90,7 @@ func handleClient(rateLimiter *limiter.RateLimiter, conn net.Conn) {
 				maxTokens = val
 			} else {
 				responser.sendError(fmt.Errorf("REDUCE expects maxTokens to be integer"))
+				status = "ARGUMENT_ERROR"
 				continue
 			}
 
@@ -90,6 +99,7 @@ func handleClient(rateLimiter *limiter.RateLimiter, conn net.Conn) {
 			} else {
 				// conn.Write([]byte(fmt.Sprintf("$-1\r\n")))
 				responser.sendError(fmt.Errorf("REDUCE expects refillTime to be integer"))
+				status = "ARGUMENT_ERROR"
 				continue
 			}
 
@@ -97,6 +107,7 @@ func handleClient(rateLimiter *limiter.RateLimiter, conn net.Conn) {
 				refillAmount = val
 			} else {
 				responser.sendError(fmt.Errorf("REDUCE expects refillAmount to be integer"))
+				status = "ARGUMENT_ERROR"
 				continue
 			}
 
@@ -104,6 +115,7 @@ func handleClient(rateLimiter *limiter.RateLimiter, conn net.Conn) {
 				tokens = val
 			} else {
 				responser.sendError(fmt.Errorf("REDUCE expects tokens to be integer"))
+				status = "ARGUMENT_ERROR"
 				continue
 			}
 
@@ -120,7 +132,11 @@ func handleClient(rateLimiter *limiter.RateLimiter, conn net.Conn) {
 			responser.sendPong()
 		default:
 			responser.sendError(fmt.Errorf("unknown command '%s'\r\n", cmd.Args))
+			status = "UNKNOWN_COMMAND"
 		}
+		elapsed := float64(time.Since(start)) / float64(time.Second)
+		metrics.reqDurations.Observe(elapsed)
+		metrics.reqCount.WithLabelValues(status).Inc()
 	}
 }
 
