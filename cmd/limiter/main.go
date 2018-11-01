@@ -22,6 +22,6 @@ func main() {
 		EnablePrometheus: *prometheus,
 	}
 
-	go redis_server.ListenAndServe(*redisPort, app.RateLimiter)
+	go redis_server.ListenAndServe(*redisPort, app.RateLimiter, *prometheus)
 	http_server.ListenAndServe(app, *httpPort, *debug)
 }

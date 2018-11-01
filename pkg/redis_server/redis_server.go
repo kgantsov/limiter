@@ -19,7 +19,7 @@ import (
 // ListenAndServe accepts incoming connections on the creating a new service goroutine for each.
 // The service goroutines read requests and then replies to them.
 // It exits program if it can not start tcp listener.
-func ListenAndServe(port int, rateLimiter *limiter.RateLimiter) {
+func ListenAndServe(port int, rateLimiter *limiter.RateLimiter, enablePrometheus bool) {
 	sigs := make(chan os.Signal, 1)
 
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -38,7 +38,12 @@ func ListenAndServe(port int, rateLimiter *limiter.RateLimiter) {
 	listener, err := net.ListenTCP("tcp", tcpAddr)
 	checkError(err)
 
-	metrics := NewMetrics("redis")
+	var metrics *Metrics
+	if enablePrometheus {
+		metrics = NewMetrics("redis")
+	} else {
+		metrics = nil
+	}
 
 	log.Info("Listening on port: ", port)
 
@@ -134,9 +139,11 @@ func handleClient(rateLimiter *limiter.RateLimiter, metrics *Metrics, conn net.C
 			responser.sendError(fmt.Errorf("unknown command '%s'\r\n", cmd.Args))
 			status = "UNKNOWN_COMMAND"
 		}
-		elapsed := float64(time.Since(start)) / float64(time.Second)
-		metrics.reqDurations.Observe(elapsed)
-		metrics.reqCount.WithLabelValues(status).Inc()
+		if metrics != nil {
+			elapsed := float64(time.Since(start)) / float64(time.Second)
+			metrics.reqDurations.Observe(elapsed)
+			metrics.reqCount.WithLabelValues(status).Inc()
+		}
 	}
 }
 
