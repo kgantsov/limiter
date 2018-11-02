@@ -102,7 +102,6 @@ func handleClient(rateLimiter *limiter.RateLimiter, metrics *Metrics, conn net.C
 			if val, err := strconv.ParseInt(cmd.Args[2], 10, 64); err == nil {
 				refillTime = val
 			} else {
-				// conn.Write([]byte(fmt.Sprintf("$-1\r\n")))
 				responser.sendError(fmt.Errorf("REDUCE expects refillTime to be integer"))
 				status = "ARGUMENT_ERROR"
 				continue
