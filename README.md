@@ -9,6 +9,10 @@ Limiter is a rate limiter application that has http and redis interfaces
 
     ./limiter --http_port=3000 --redis_port=46379
 
+### Start with enabled prometheus
+
+    ./limiter --http_port=3000 --redis_port=46379 --prometheus true
+
 
 ### Usage
 
