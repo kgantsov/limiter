@@ -1,12 +1,17 @@
 import os
+import time
+
 from random import choice
 
+import redis
+
+from locust import Locust
+from locust import events
 from locust import HttpLocust
 from locust import TaskSet
 from locust import task
 
-
-class UserBehavior(TaskSet):
+class LimiterBehavior(TaskSet):
     def on_start(self):
         pass
 
@@ -20,7 +25,7 @@ class UserBehavior(TaskSet):
         assert response.status_code == 200, response.text
 
 
-class WebsiteUser(HttpLocust):
-    task_set = UserBehavior
+class WebsiteLimiter(HttpLocust):
+    task_set = LimiterBehavior
     min_wait = 1000
     max_wait = 4000
