@@ -1,5 +1,6 @@
 import os
 import time
+import uuid
 
 from random import choice
 
@@ -11,14 +12,15 @@ from locust import HttpLocust
 from locust import TaskSet
 from locust import task
 
+
 class LimiterBehavior(TaskSet):
     def on_start(self):
-        pass
+        self.user_id = uuid.uuid1()
 
     @task(1)
     def get_tokens_http(self):
         response = self.client.get(
-            "/API/v1/limiter/test/1000/1/1000/1/",
+            '/API/v1/limiter/user_{}/1000/1/1000/1/'.format(self.user_id),
             name='/API/v1/limiter/test/1000/1/1000/1/'
         )
 
