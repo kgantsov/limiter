@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/kgantsov/limiter/pkg/limiter"
@@ -17,6 +20,19 @@ import (
 // The service goroutines read requests and then replies to them.
 // It exits program if it can not start tcp listener.
 func ListenAndServe(port int, rateLimiter *limiter.RateLimiter, enablePrometheus bool) {
+	sigs := make(chan os.Signal, 1)
+
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigs
+		log.Info(sig)
+
+		log.Info("Stopping the application")
+
+		os.Exit(0)
+	}()
+
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", fmt.Sprintf(":%d", port))
 	checkError(err)
 	listener, err := net.ListenTCP("tcp", tcpAddr)
