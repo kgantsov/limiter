@@ -33,19 +33,30 @@ func ListenAndServe(port int, rateLimiter *limiter.RateLimiter, enablePrometheus
 		os.Exit(0)
 	}()
 
-	tcpAddr, err := net.ResolveTCPAddr("tcp4", fmt.Sprintf(":%d", port))
+	server := &Server{Port: port, RateLimiter: rateLimiter, EnablePrometheus: enablePrometheus}
+	server.ListenAndServe()
+}
+
+type Server struct {
+	Port             int
+	RateLimiter      *limiter.RateLimiter
+	EnablePrometheus bool
+	Metrics          *Metrics
+}
+
+func (srv *Server) ListenAndServe() {
+	tcpAddr, err := net.ResolveTCPAddr("tcp4", fmt.Sprintf(":%d", srv.Port))
 	checkError(err)
 	listener, err := net.ListenTCP("tcp", tcpAddr)
 	checkError(err)
 
-	var metrics *Metrics
-	if enablePrometheus {
-		metrics = NewMetrics("redis")
+	if srv.EnablePrometheus {
+		srv.Metrics = NewMetrics("redis")
 	} else {
-		metrics = nil
+		srv.Metrics = nil
 	}
 
-	log.Info("Listening on port: ", port)
+	log.Info("Listening on port: ", srv.Port)
 
 	for {
 		conn, err := listener.Accept()
@@ -53,11 +64,11 @@ func ListenAndServe(port int, rateLimiter *limiter.RateLimiter, enablePrometheus
 			log.Error("Fatal error: ", err.Error())
 			continue
 		}
-		go handleClient(rateLimiter, metrics, conn)
+		go srv.handleClient(conn)
 	}
 }
 
-func handleClient(rateLimiter *limiter.RateLimiter, metrics *Metrics, conn net.Conn) {
+func (srv *Server) handleClient(conn net.Conn) {
 	reader := bufio.NewReader(conn)
 	parser := newParser(reader)
 	responser := newResponser(conn)
@@ -123,7 +134,7 @@ func handleClient(rateLimiter *limiter.RateLimiter, metrics *Metrics, conn net.C
 				continue
 			}
 
-			tokensLeft, err := rateLimiter.Reduce(
+			tokensLeft, err := srv.RateLimiter.Reduce(
 				key, maxTokens, refillTime, refillAmount, tokens,
 			)
 
@@ -138,10 +149,10 @@ func handleClient(rateLimiter *limiter.RateLimiter, metrics *Metrics, conn net.C
 			responser.sendError(fmt.Errorf("unknown command '%s'\r\n", cmd.Args))
 			status = "UNKNOWN_COMMAND"
 		}
-		if metrics != nil {
+		if srv.Metrics != nil {
 			elapsed := float64(time.Since(start)) / float64(time.Second)
-			metrics.reqDurations.Observe(elapsed)
-			metrics.reqCount.WithLabelValues(status).Inc()
+			srv.Metrics.reqDurations.Observe(elapsed)
+			srv.Metrics.reqCount.WithLabelValues(status).Inc()
 		}
 	}
 }
