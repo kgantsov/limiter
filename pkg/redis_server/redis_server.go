@@ -20,6 +20,8 @@ import (
 // The service goroutines read requests and then replies to them.
 // It exits program if it can not start tcp listener.
 func ListenAndServe(port int, rateLimiter *limiter.RateLimiter, enablePrometheus bool) {
+	server := &Server{Port: port, RateLimiter: rateLimiter, EnablePrometheus: enablePrometheus}
+
 	sigs := make(chan os.Signal, 1)
 
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -33,7 +35,6 @@ func ListenAndServe(port int, rateLimiter *limiter.RateLimiter, enablePrometheus
 		os.Exit(0)
 	}()
 
-	server := &Server{Port: port, RateLimiter: rateLimiter, EnablePrometheus: enablePrometheus}
 	server.ListenAndServe()
 }
 
