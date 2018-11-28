@@ -43,12 +43,13 @@ type Server struct {
 	RateLimiter      *limiter.RateLimiter
 	EnablePrometheus bool
 	Metrics          *Metrics
+	TCPListener      *net.TCPListener
 }
 
 func (srv *Server) ListenAndServe() {
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", fmt.Sprintf(":%d", srv.Port))
 	checkError(err)
-	listener, err := net.ListenTCP("tcp", tcpAddr)
+	srv.TCPListener, err = net.ListenTCP("tcp", tcpAddr)
 	checkError(err)
 
 	if srv.EnablePrometheus {
@@ -60,7 +61,7 @@ func (srv *Server) ListenAndServe() {
 	log.Info("Listening on port: ", srv.Port)
 
 	for {
-		conn, err := listener.Accept()
+		conn, err := srv.TCPListener.Accept()
 		if err != nil {
 			log.Error("Fatal error: ", err.Error())
 			continue
