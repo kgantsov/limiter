@@ -144,7 +144,7 @@ func (app *App) Stat(c *gin.Context) {
 		200,
 		gin.H{
 			"num_goroutines": runtime.NumGoroutine(),
-			"CPU":            userCPU,
+			"cpu":            userCPU,
 			"max_rss":        maxRSS,
 		},
 	)
