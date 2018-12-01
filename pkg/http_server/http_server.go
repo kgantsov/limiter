@@ -22,20 +22,6 @@ type RateLimiterParams struct {
 	RefillAmount int64 `json:"refill_amount"`
 }
 
-func DefineRoutes(app *App, r *gin.Engine) {
-	r.GET("/stats/", app.Stat)
-	v1 := r.Group("/API/v1")
-	{
-		v1.GET("/limiter/:key/:max_tokens/:refill_time/:refill_amount/:tokens/", app.ReduceLimiter)
-	}
-
-	if app.EnablePrometheus {
-		for _, ri := range r.Routes() {
-			app.PathMap[ri.Handler] = ri.Path
-		}
-	}
-}
-
 func ListenAndServe(app *App, port int, debug bool) {
 	log.Infof("Strarting API service on a port: %d", port)
 
