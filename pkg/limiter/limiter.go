@@ -10,11 +10,8 @@ import (
 )
 
 type Bucket struct {
-	Value        int64
-	MaxTokens    int64
-	RefillTime   int64
-	RefillAmount int64
-	LastUpdate   int64
+	Value      int64
+	LastUpdate int64
 }
 
 type RateLimiter struct {
@@ -40,37 +37,24 @@ func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refi
 
 	if !ok {
 		bucket = &Bucket{
-			Value:        maxTokens,
-			MaxTokens:    maxTokens,
-			RefillTime:   refillTime,
-			RefillAmount: refillAmount,
-			LastUpdate:   time.Now().Unix(),
+			Value:      maxTokens,
+			LastUpdate: time.Now().Unix(),
 		}
 		l.mu.Lock()
 		l.Buckets[key] = bucket
 		l.mu.Unlock()
-	} else {
-		if bucket.MaxTokens != maxTokens {
-			atomic.StoreInt64(&bucket.MaxTokens, maxTokens)
-		}
-		if bucket.RefillTime != refillTime {
-			atomic.StoreInt64(&bucket.RefillTime, refillTime)
-		}
-		if bucket.RefillAmount != refillAmount {
-			atomic.StoreInt64(&bucket.RefillAmount, refillAmount)
-		}
 	}
 
 	now := time.Now().Unix()
 	refillCount := math.Floor(
-		float64(now-bucket.LastUpdate) / float64(bucket.RefillTime),
+		float64(now-bucket.LastUpdate) / float64(refillTime),
 	)
 
 	atomic.StoreInt64(
 		&bucket.Value,
 		int64(math.Min(
-			float64(bucket.MaxTokens),
-			float64(bucket.Value)+(refillCount*float64(bucket.RefillAmount)),
+			float64(maxTokens),
+			float64(bucket.Value)+(refillCount*float64(refillAmount)),
 		)),
 	)
 
