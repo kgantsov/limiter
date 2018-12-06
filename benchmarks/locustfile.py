@@ -1,8 +1,7 @@
 import os
 import time
 import uuid
-
-from random import choice
+import random
 
 import redis
 
@@ -60,6 +59,17 @@ class LimiterBehavior(TaskSet):
         assert response.status_code == 200, response.text
 
     @task(1)
+    def get_tokens_http_(self):
+        response = self.client.get(
+            '/API/v1/limiter/user_{}_endpoint_{}/1000/1/1000/1/'.format(
+                self.user_id, random.randint(1, 1000000)
+            ),
+            name='/API/v1/limiter/test/1000/1/1000/1/'
+        )
+
+        assert response.status_code == 200, response.text
+
+    @task(1)
     def get_tokens_redis(self):
         key = 'user_{}'.format(self.user_id)
         tokens = self.reids.execute_command(
@@ -73,8 +83,24 @@ class LimiterBehavior(TaskSet):
         )
         assert tokens >= -1, tokens
 
+    @task(1)
+    def get_tokens_redis(self):
+        key = 'user_{}_endpoint_{}'.format(
+            self.user_id, random.randint(1, 1000000)
+        )
+        tokens = self.reids.execute_command(
+            'REDUCE 1000 10 1000 10',
+            'REDUCE',
+            key,
+            1000,
+            10,
+            1000,
+            10
+        )
+        assert tokens >= -1, tokens
+
 
 class WebsiteLimiter(HttpLocust):
     task_set = LimiterBehavior
-    min_wait = 1000
-    max_wait = 4000
+    min_wait = 10
+    max_wait = 1000
