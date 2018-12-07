@@ -16,6 +16,7 @@ type Bucket struct {
 
 type RateLimiter struct {
 	Buckets map[string]*Bucket
+	length  int64
 	mu      sync.RWMutex
 }
 
@@ -43,6 +44,8 @@ func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refi
 		l.mu.Lock()
 		l.Buckets[key] = bucket
 		l.mu.Unlock()
+
+		atomic.AddInt64(&l.length, 1)
 	}
 
 	now := time.Now().Unix()
@@ -76,6 +79,10 @@ func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refi
 	)
 
 	return bucket.Value, nil
+}
+
+func (l *RateLimiter) Len() int64 {
+	return l.length
 }
 
 func TimeTrack(start time.Time, name string) {
