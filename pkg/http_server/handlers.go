@@ -72,6 +72,7 @@ func (app *App) Stat(c *gin.Context) {
 	syscall.Getrusage(0, rusage)
 	userCPU := rusage.Utime.Sec*1e9 + int64(rusage.Utime.Usec)
 	maxRSS := float64(rusage.Maxrss)
+	numberOfKeys := app.RateLimiter.Len()
 
 	c.JSON(
 		200,
@@ -79,6 +80,7 @@ func (app *App) Stat(c *gin.Context) {
 			"num_goroutines": runtime.NumGoroutine(),
 			"cpu":            userCPU,
 			"max_rss":        maxRSS,
+			"number_of_keys": numberOfKeys,
 		},
 	)
 }
