@@ -44,10 +44,9 @@ class RedisClient(object):
         return result
 
 
-class LimiterBehavior(TaskSet):
+class LimiterHTTPBehavior(TaskSet):
     def on_start(self):
         self.user_id = uuid.uuid1()
-        self.reids = RedisClient(port=46379)
 
     @task(1)
     def get_tokens_http(self):
@@ -69,6 +68,12 @@ class LimiterBehavior(TaskSet):
 
         assert response.status_code == 200, response.text
 
+
+class LimiterRedisBehavior(TaskSet):
+    def on_start(self):
+        self.user_id = uuid.uuid1()
+        self.reids = RedisClient(port=46379)
+
     @task(1)
     def get_tokens_redis(self):
         key = 'user_{}'.format(self.user_id)
@@ -84,7 +89,7 @@ class LimiterBehavior(TaskSet):
         assert tokens >= -1, tokens
 
     @task(1)
-    def get_tokens_redis(self):
+    def get_tokens_redis_(self):
         key = 'user_{}_endpoint_{}'.format(
             self.user_id, random.randint(1, 1000000)
         )
@@ -100,7 +105,13 @@ class LimiterBehavior(TaskSet):
         assert tokens >= -1, tokens
 
 
-class WebsiteLimiter(HttpLocust):
-    task_set = LimiterBehavior
+class HTTPLimiter(HttpLocust):
+    task_set = LimiterHTTPBehavior
+    min_wait = 10
+    max_wait = 1000
+
+
+class RedisLimiter(HttpLocust):
+    task_set = LimiterRedisBehavior
     min_wait = 10
     max_wait = 1000
