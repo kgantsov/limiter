@@ -85,6 +85,12 @@ func (l *RateLimiter) Len() int64 {
 	return l.length
 }
 
+func (l *RateLimiter) Remove(key string) {
+	l.mu.Lock()
+	delete(l.Buckets, key)
+	l.mu.Unlock()
+}
+
 func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
 	log.Debugf("%s took %s", name, elapsed)
