@@ -89,6 +89,7 @@ func (l *RateLimiter) Remove(key string) {
 	l.mu.Lock()
 	delete(l.Buckets, key)
 	l.mu.Unlock()
+	atomic.AddInt64(&l.length, -1)
 }
 
 func TimeTrack(start time.Time, name string) {
