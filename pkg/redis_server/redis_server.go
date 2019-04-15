@@ -87,7 +87,7 @@ func (srv *Server) handleClient(conn net.Conn) {
 			} else if _, ok := err.(error); ok {
 				responser.sendError(err)
 			} else {
-				log.Debug("Errror parsing command: %s", err)
+				log.Debugf("Errror parsing command: %s", err)
 				status = "PARSING_ERROR"
 			}
 			return
