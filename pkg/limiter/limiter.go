@@ -1,6 +1,7 @@
 package limiter
 
 import (
+	"hash/fnv"
 	"math"
 	"sync"
 	"sync/atomic"
@@ -9,22 +10,25 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Bucket struct {
-	Value      int64
-	LastUpdate int64
-}
-
 type RateLimiter struct {
-	Buckets map[string]*Bucket
-	length  int64
-	mu      sync.RWMutex
+	Values      map[int64]int64
+	LastUpdates map[int64]int64
+	length      int64
+	mu          sync.RWMutex
 }
 
 func NewRateLimiter() *RateLimiter {
 	rateLimiter := new(RateLimiter)
-	rateLimiter.Buckets = make(map[string]*Bucket)
+	rateLimiter.Values = make(map[int64]int64)
+	rateLimiter.LastUpdates = make(map[int64]int64)
 
 	return rateLimiter
+}
+
+func hash(s string) uint64 {
+	h := fnv.New64a()
+	h.Write([]byte(s))
+	return h.Sum64()
 }
 
 func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refillAmount int64, tokens int64) (int64, error) {
@@ -32,53 +36,45 @@ func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refi
 		defer TimeTrack(time.Now(), "RateLimiter.Reduce")
 	}
 
-	l.mu.RLock()
-	bucket, ok := l.Buckets[key]
-	l.mu.RUnlock()
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	h := int64(hash(key))
 
-	if !ok {
-		bucket = &Bucket{
-			Value:      maxTokens,
-			LastUpdate: time.Now().Unix(),
-		}
-		l.mu.Lock()
-		l.Buckets[key] = bucket
-		l.mu.Unlock()
+	value, ok := l.Values[h]
+	lastUpdate, ok1 := l.LastUpdates[h]
+
+	now := time.Now().Unix()
+
+	if !ok || !ok1 {
+		value = maxTokens
+		lastUpdate = now
 
 		atomic.AddInt64(&l.length, 1)
 	}
 
-	now := time.Now().Unix()
+	now = time.Now().Unix()
 	refillCount := math.Floor(
-		float64(now-bucket.LastUpdate) / float64(refillTime),
+		float64(now-lastUpdate) / float64(refillTime),
 	)
 
-	atomic.StoreInt64(
-		&bucket.Value,
-		int64(math.Min(
-			float64(maxTokens),
-			float64(bucket.Value)+(refillCount*float64(refillAmount)),
-		)),
-	)
+	value = int64(math.Min(
+		float64(maxTokens),
+		float64(value)+(refillCount*float64(refillAmount)),
+	))
+	lastUpdate = int64(math.Min(
+		float64(now),
+		float64(lastUpdate)+refillCount*float64(lastUpdate),
+	))
+	l.Values[h] = value
+	l.LastUpdates[h] = lastUpdate
 
-	atomic.StoreInt64(
-		&bucket.LastUpdate,
-		int64(math.Min(
-			float64(now),
-			float64(bucket.LastUpdate)+refillCount*float64(bucket.LastUpdate),
-		)),
-	)
-
-	if tokens > bucket.Value {
+	if tokens > value {
 		return -1, nil
 	}
+	value = value - tokens
+	l.Values[h] = value
 
-	atomic.AddInt64(
-		&bucket.Value,
-		-tokens,
-	)
-
-	return bucket.Value, nil
+	return value, nil
 }
 
 func (l *RateLimiter) Len() int64 {
@@ -86,8 +82,10 @@ func (l *RateLimiter) Len() int64 {
 }
 
 func (l *RateLimiter) Remove(key string) {
+	h := int64(hash(key))
 	l.mu.Lock()
-	delete(l.Buckets, key)
+	delete(l.Values, h)
+	delete(l.LastUpdates, h)
 	l.mu.Unlock()
 	atomic.AddInt64(&l.length, -1)
 }
