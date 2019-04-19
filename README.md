@@ -31,11 +31,11 @@ Limiter is a rate limiter application that has http and redis interfaces
 
 ### Benchmarks
 
-    > $ go test -run XXX -bench . -benchmem
+    > go test -run XXX -bench .
     goos: darwin
     goarch: amd64
     pkg: github.com/kgantsov/limiter/pkg/limiter
-    BenchmarkReduce_100_1000_1_1000_1-4        	 2000000	       745 ns/op	       0 B/op	       0 allocs/op
-    BenchmarkReduce_10000000_1000_1_1000_1-4   	 1000000	      2130 ns/op	     139 B/op	       0 allocs/op
+    BenchmarkReduce_100_1000_1_1000_1-4          	 1000000	      1778 ns/op	      16 B/op	       2 allocs/op
+    BenchmarkReduce_10000000_1000_10_1000_10-4   	  500000	      2557 ns/op	     207 B/op	       2 allocs/op
     PASS
-    ok  	github.com/kgantsov/limiter/pkg/limiter	150.661s
+    ok  	github.com/kgantsov/limiter/pkg/limiter	62.610s
