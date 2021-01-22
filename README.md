@@ -31,17 +31,17 @@ Limiter is a rate limiter application that has http and redis interfaces
 
 ### Benchmarks
 
-    > $ go test -cpu 1,2,4,8 -run XXX -bench .
+    go test -cpu 1,2,4,8 -run XXX -bench . -benchmem
     goos: darwin
     goarch: amd64
     pkg: github.com/kgantsov/limiter/pkg/limiter
-    BenchmarkReduce_100_1000_1_1000_1            	 2734095	       446 ns/op
-    BenchmarkReduce_100_1000_1_1000_1-2          	 2373958	       515 ns/op
-    BenchmarkReduce_100_1000_1_1000_1-4          	 2350014	       504 ns/op
-    BenchmarkReduce_100_1000_1_1000_1-8          	 2367374	       500 ns/op
-    BenchmarkReduce_10000000_1000_10_1000_10     	 1548418	       717 ns/op
-    BenchmarkReduce_10000000_1000_10_1000_10-2   	 1000000	      1020 ns/op
-    BenchmarkReduce_10000000_1000_10_1000_10-4   	 1222263	       939 ns/op
-    BenchmarkReduce_10000000_1000_10_1000_10-8   	 1375906	       775 ns/op
+    BenchmarkReduce_100_1000_1_1000_1            	 2665611	       445 ns/op	      32 B/op	       3 allocs/op
+    BenchmarkReduce_100_1000_1_1000_1-2          	 2310619	       498 ns/op	      32 B/op	       3 allocs/op
+    BenchmarkReduce_100_1000_1_1000_1-4          	 2370313	       505 ns/op	      32 B/op	       3 allocs/op
+    BenchmarkReduce_100_1000_1_1000_1-8          	 2298116	       516 ns/op	      32 B/op	       3 allocs/op
+    BenchmarkReduce_10000000_1000_10_1000_10     	 1404150	       769 ns/op	     174 B/op	       4 allocs/op
+    BenchmarkReduce_10000000_1000_10_1000_10-2   	 1354113	       825 ns/op	     178 B/op	       4 allocs/op
+    BenchmarkReduce_10000000_1000_10_1000_10-4   	 1413645	       815 ns/op	     173 B/op	       4 allocs/op
+    BenchmarkReduce_10000000_1000_10_1000_10-8   	 1315806	       841 ns/op	     182 B/op	       4 allocs/op
     PASS
-    ok  	github.com/kgantsov/limiter/pkg/limiter	14.058s
+    ok  	github.com/kgantsov/limiter/pkg/limiter	14.822s
