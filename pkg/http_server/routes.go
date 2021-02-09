@@ -7,6 +7,7 @@ func DefineRoutes(app *App, r *gin.Engine) {
 	v1 := r.Group("/API/v1")
 	{
 		v1.GET("/limiter/:key/:max_tokens/:refill_time/:refill_amount/:tokens/", app.ReduceLimiter)
+		v1.DELETE("/limiter/:key/", app.Remove)
 	}
 
 	if app.EnablePrometheus {

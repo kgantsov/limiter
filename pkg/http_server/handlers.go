@@ -84,3 +84,11 @@ func (app *App) Stat(c *gin.Context) {
 		},
 	)
 }
+
+func (app *App) Remove(c *gin.Context) {
+	key := c.Param("key")
+
+	app.RateLimiter.Remove(key)
+
+	c.JSON(204, gin.H{})
+}
