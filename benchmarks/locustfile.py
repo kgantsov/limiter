@@ -5,9 +5,10 @@ import random
 
 import redis
 
-from locust import Locust
+from locust import User
 from locust import events
-from locust import HttpLocust
+from locust import HttpUser
+from locust.contrib.fasthttp import FastHttpUser
 from locust import TaskSet
 from locust import task
 
@@ -105,13 +106,13 @@ class LimiterRedisBehavior(TaskSet):
         assert tokens >= -1, tokens
 
 
-class HTTPLimiter(HttpLocust):
-    task_set = LimiterHTTPBehavior
+class HTTPLimiter(FastHttpUser):
+    tasks = [LimiterHTTPBehavior]
     min_wait = 10
     max_wait = 1000
 
 
-class RedisLimiter(HttpLocust):
-    task_set = LimiterRedisBehavior
+class RedisLimiter(User):
+    tasks = [LimiterRedisBehavior]
     min_wait = 10
     max_wait = 1000
