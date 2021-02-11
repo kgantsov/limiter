@@ -10,17 +10,29 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type RateLimiter struct {
+var SHARDS = uint64(128)
+
+type Shard struct {
 	Values      map[int64]int64
 	LastUpdates map[int64]int64
-	length      int64
 	mu          sync.RWMutex
+}
+
+type RateLimiter struct {
+	shards []*Shard
+	length int64
 }
 
 func NewRateLimiter() *RateLimiter {
 	rateLimiter := new(RateLimiter)
-	rateLimiter.Values = make(map[int64]int64)
-	rateLimiter.LastUpdates = make(map[int64]int64)
+
+	rateLimiter.shards = make([]*Shard, SHARDS)
+
+	for i := uint64(0); i < SHARDS; i++ {
+		rateLimiter.shards[i] = &Shard{
+			Values: make(map[int64]int64), LastUpdates: make(map[int64]int64),
+		}
+	}
 
 	return rateLimiter
 }
@@ -31,17 +43,23 @@ func hash(s string) uint64 {
 	return h.Sum64()
 }
 
+func (l *RateLimiter) GetShard(key int64) *Shard {
+	return l.shards[uint64(key)%SHARDS]
+}
+
 func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refillAmount int64, tokens int64) (int64, error) {
 	if log.GetLevel() == log.DebugLevel {
 		defer TimeTrack(time.Now(), "RateLimiter.Reduce")
 	}
-
-	l.mu.Lock()
-	defer l.mu.Unlock()
 	h := int64(hash(key))
 
-	value, ok := l.Values[h]
-	lastUpdate, ok1 := l.LastUpdates[h]
+	shard := l.GetShard(h)
+
+	shard.mu.Lock()
+	defer shard.mu.Unlock()
+
+	value, ok := shard.Values[h]
+	lastUpdate, ok1 := shard.LastUpdates[h]
 
 	now := time.Now().Unix()
 
@@ -65,14 +83,14 @@ func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refi
 		float64(now),
 		float64(lastUpdate)+refillCount*float64(lastUpdate),
 	))
-	l.Values[h] = value
-	l.LastUpdates[h] = lastUpdate
+	shard.Values[h] = value
+	shard.LastUpdates[h] = lastUpdate
 
 	if tokens > value {
 		return -1, nil
 	}
 	value = value - tokens
-	l.Values[h] = value
+	shard.Values[h] = value
 
 	return value, nil
 }
@@ -83,10 +101,13 @@ func (l *RateLimiter) Len() int64 {
 
 func (l *RateLimiter) Remove(key string) {
 	h := int64(hash(key))
-	l.mu.Lock()
-	delete(l.Values, h)
-	delete(l.LastUpdates, h)
-	l.mu.Unlock()
+	shard := l.GetShard(h)
+
+	shard.mu.Lock()
+	delete(shard.Values, h)
+	delete(shard.LastUpdates, h)
+	shard.mu.Unlock()
+
 	atomic.AddInt64(&l.length, -1)
 }
 
