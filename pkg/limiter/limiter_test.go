@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
-func assetEqual(t *testing.T, expected, actual interface{}) {
+func assetEqual(t *testing.T, expected, actual int64) {
 	if expected != actual {
-		fmt.Printf("Expected `%t`. Got `%t`\n", expected, actual)
-		t.Errorf("Expected `%#v`. Got `%#v`\n", expected, actual)
+		fmt.Printf("Expected `%d`. Got `%d`\n", expected, actual)
+		t.Errorf("Expected `%d`. Got `%d`\n", expected, actual)
 	}
 }
 
