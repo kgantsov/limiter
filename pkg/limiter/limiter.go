@@ -13,8 +13,9 @@ import (
 var SHARDS = uint64(1024)
 
 type Bucket struct {
-	Value     int64
-	UpdatedAt int64
+	Value        int64
+	WillBeFullAt int64
+	UpdatedAt    int64
 }
 
 type Shard struct {
@@ -66,10 +67,14 @@ func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refi
 
 	if !ok {
 		value := maxTokens - tokens
+		tokensNeeded := maxTokens - value
+		refillCyclesNeeded := int64(math.Ceil(float64(tokensNeeded) / float64(refillAmount)))
+		WillBeFullAt := now + (refillCyclesNeeded * refillTime)
 
 		bucket = Bucket{
-			Value:     value,
-			UpdatedAt: now,
+			Value:        value,
+			WillBeFullAt: WillBeFullAt,
+			UpdatedAt:    now,
 		}
 		shard.Buckets[key] = bucket
 
@@ -95,15 +100,31 @@ func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refi
 	}
 
 	value = value - tokens
+	tokensNeeded := maxTokens - value
+	refillCyclesNeeded := int64(math.Ceil(float64(tokensNeeded) / float64(refillAmount)))
+	WillBeFullAt := now + (refillCyclesNeeded * refillTime)
 
-	bucket = Bucket{Value: value, UpdatedAt: lastUpdate}
+	bucket = Bucket{Value: value, WillBeFullAt: WillBeFullAt, UpdatedAt: lastUpdate}
 	shard.Buckets[key] = bucket
 
 	return bucket.Value, nil
 }
 
 func (l *RateLimiter) Len() int64 {
-	return l.length
+	return atomic.LoadInt64(&l.length)
+}
+
+func (l *RateLimiter) CleanUpFullBuckets() {
+	for _, shard := range l.shards {
+		shard.mu.Lock()
+		for key, bucket := range shard.Buckets {
+			if bucket.WillBeFullAt < time.Now().Unix() {
+				delete(shard.Buckets, key)
+				atomic.AddInt64(&l.length, -1)
+			}
+		}
+		shard.mu.Unlock()
+	}
 }
 
 func (l *RateLimiter) Remove(key string) {
