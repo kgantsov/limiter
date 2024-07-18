@@ -10,12 +10,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var SHARDS = uint64(128)
+var SHARDS = uint64(1024)
+
+type Bucket struct {
+	Value     int64
+	UpdatedAt int64
+}
 
 type Shard struct {
-	Values      map[int64]int64
-	LastUpdates map[int64]int64
-	mu          sync.RWMutex
+	Buckets map[string]Bucket
+	mu      sync.RWMutex
 }
 
 type RateLimiter struct {
@@ -29,9 +33,7 @@ func NewRateLimiter() *RateLimiter {
 	rateLimiter.shards = make([]*Shard, SHARDS)
 
 	for i := uint64(0); i < SHARDS; i++ {
-		rateLimiter.shards[i] = &Shard{
-			Values: make(map[int64]int64), LastUpdates: make(map[int64]int64),
-		}
+		rateLimiter.shards[i] = &Shard{Buckets: make(map[string]Bucket)}
 	}
 
 	return rateLimiter
@@ -58,41 +60,46 @@ func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refi
 	shard.mu.Lock()
 	defer shard.mu.Unlock()
 
-	value, ok := shard.Values[h]
-	lastUpdate, ok1 := shard.LastUpdates[h]
+	bucket, ok := shard.Buckets[key]
 
 	now := time.Now().Unix()
 
-	if !ok || !ok1 {
-		value = maxTokens
-		lastUpdate = now
+	if !ok {
+		value := maxTokens - tokens
+
+		bucket = Bucket{
+			Value:     value,
+			UpdatedAt: now,
+		}
+		shard.Buckets[key] = bucket
 
 		atomic.AddInt64(&l.length, 1)
+		return bucket.Value, nil
 	}
 
-	now = time.Now().Unix()
 	refillCount := math.Floor(
-		float64(now-lastUpdate) / float64(refillTime),
+		float64(now-bucket.UpdatedAt) / float64(refillTime),
 	)
 
-	value = int64(math.Min(
+	value := int64(math.Min(
 		float64(maxTokens),
-		float64(value)+(refillCount*float64(refillAmount)),
+		float64(bucket.Value)+(refillCount*float64(refillAmount)),
 	))
-	lastUpdate = int64(math.Min(
+	lastUpdate := int64(math.Min(
 		float64(now),
-		float64(lastUpdate)+refillCount*float64(lastUpdate),
+		float64(bucket.UpdatedAt)+refillCount*float64(bucket.UpdatedAt),
 	))
-	shard.Values[h] = value
-	shard.LastUpdates[h] = lastUpdate
 
 	if tokens > value {
 		return -1, nil
 	}
-	value = value - tokens
-	shard.Values[h] = value
 
-	return value, nil
+	value = value - tokens
+
+	bucket = Bucket{Value: value, UpdatedAt: lastUpdate}
+	shard.Buckets[key] = bucket
+
+	return bucket.Value, nil
 }
 
 func (l *RateLimiter) Len() int64 {
@@ -104,8 +111,7 @@ func (l *RateLimiter) Remove(key string) {
 	shard := l.GetShard(h)
 
 	shard.mu.Lock()
-	delete(shard.Values, h)
-	delete(shard.LastUpdates, h)
+	delete(shard.Buckets, key)
 	shard.mu.Unlock()
 
 	atomic.AddInt64(&l.length, -1)

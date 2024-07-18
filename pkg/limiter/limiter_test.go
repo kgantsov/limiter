@@ -69,3 +69,26 @@ func TestFastRateLimiter(t *testing.T) {
 	val, _ = rl.Reduce("api_call", 1000, 1, 1000, 1)
 	assetEqual(t, int64(-1), val)
 }
+
+func TestRateLimiterWithManyKeys(t *testing.T) {
+	rl := NewRateLimiter()
+
+	for i := 1000_000; i >= 0; i-- {
+		val, _ := rl.Reduce(fmt.Sprintf("api_call:%d", i), 1000, 1, 1000, 1)
+		assetEqual(t, 999, val)
+	}
+}
+
+func TestRateLimiterD(t *testing.T) {
+	rl := NewRateLimiter()
+
+	val, _ := rl.Reduce("api_call", 100, 1, 10, 10)
+	assetEqual(t, 90, val)
+	val, _ = rl.Reduce("api_call", 100, 1, 10, 10)
+	assetEqual(t, 80, val)
+	val, _ = rl.Reduce("api_call", 100, 1, 10, 10)
+	assetEqual(t, 70, val)
+	time.Sleep(1 * time.Second)
+	val, _ = rl.Reduce("api_call", 100, 1, 10, 50)
+	assetEqual(t, 30, val)
+}
