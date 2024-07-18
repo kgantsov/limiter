@@ -127,6 +127,13 @@ func (l *RateLimiter) CleanUpFullBuckets() {
 	}
 }
 
+func (l *RateLimiter) StartCleanUpFullBuckets() {
+	for {
+		time.Sleep(60 * time.Second)
+		l.CleanUpFullBuckets()
+	}
+}
+
 func (l *RateLimiter) Remove(key string) {
 	h := int64(hash(key))
 	shard := l.GetShard(h)

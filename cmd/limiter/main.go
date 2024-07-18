@@ -16,8 +16,11 @@ func main() {
 
 	flag.Parse()
 
+	rateLimiter := limiter.NewRateLimiter()
+	go rateLimiter.StartCleanUpFullBuckets()
+
 	app := http_server.NewApp(
-		*httpPort, limiter.NewRateLimiter(), make(map[string]string), *prometheus,
+		*httpPort, rateLimiter, make(map[string]string), *prometheus,
 	)
 
 	go redis_server.ListenAndServe(*redisPort, app.RateLimiter, *prometheus)
