@@ -13,7 +13,7 @@ import (
 
 	"github.com/kgantsov/limiter/pkg/limiter"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 // ListenAndServe accepts incoming connections on the creating a new service goroutine for each.
@@ -28,9 +28,9 @@ func ListenAndServe(port int, rateLimiter *limiter.RateLimiter, enablePrometheus
 
 	go func() {
 		sig := <-sigs
-		log.Info(sig)
+		log.Info().Msgf("Received a signal: %d", sig)
 
-		log.Info("Stopping the application")
+		log.Info().Msg("Stopping the application")
 
 		os.Exit(0)
 	}()
@@ -58,12 +58,12 @@ func (srv *Server) ListenAndServe() {
 		srv.Metrics = nil
 	}
 
-	log.Info("Listening on port: ", srv.Port)
+	log.Info().Msgf("Listening on port: %d", srv.Port)
 
 	for {
 		conn, err := srv.TCPListener.Accept()
 		if err != nil {
-			log.Error("Fatal error: ", err.Error())
+			log.Error().Msgf("Fatal error: %s", err.Error())
 			continue
 		}
 		go srv.handleClient(conn)
@@ -83,11 +83,11 @@ func (srv *Server) handleClient(conn net.Conn) {
 
 		if err != nil {
 			if err == io.EOF {
-				log.Debug("Client has been disconnected")
+				log.Debug().Msg("Client has been disconnected")
 			} else if _, ok := err.(error); ok {
 				responser.sendError(err)
 			} else {
-				log.Debugf("Errror parsing command: %s", err)
+				log.Debug().Msgf("Errror parsing command: %s", err)
 				status = "PARSING_ERROR"
 			}
 			return
@@ -161,6 +161,6 @@ func (srv *Server) handleClient(conn net.Conn) {
 
 func checkError(err error) {
 	if err != nil {
-		log.Fatal("Fatal error: ", err.Error())
+		log.Fatal().Msgf("Fatal error: %s", err.Error())
 	}
 }

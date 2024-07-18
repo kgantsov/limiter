@@ -8,7 +8,7 @@ require (
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/prometheus/client_golang v1.19.1
-	github.com/sirupsen/logrus v1.9.3
+	github.com/rs/zerolog v1.33.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tidwall/redbench v0.1.0
 )

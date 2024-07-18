@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 var SHARDS = uint64(1024)
@@ -51,9 +51,9 @@ func (l *RateLimiter) GetShard(key int64) *Shard {
 }
 
 func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refillAmount int64, tokens int64) (int64, error) {
-	if log.GetLevel() == log.DebugLevel {
-		defer TimeTrack(time.Now(), "RateLimiter.Reduce")
-	}
+	// if log.GetLevel() == log.DebugLevel {
+	// 	defer TimeTrack(time.Now(), "RateLimiter.Reduce")
+	// }
 	h := int64(hash(key))
 
 	shard := l.GetShard(h)
@@ -147,5 +147,5 @@ func (l *RateLimiter) Remove(key string) {
 
 func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
-	log.Debugf("%s took %s", name, elapsed)
+	log.Debug().Msgf("%s took %s", name, elapsed)
 }

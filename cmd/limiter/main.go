@@ -2,6 +2,11 @@ package main
 
 import (
 	"flag"
+	"os"
+	"time"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	http_server "github.com/kgantsov/limiter/pkg/http_server"
 	limiter "github.com/kgantsov/limiter/pkg/limiter"
@@ -13,6 +18,10 @@ func main() {
 	redisPort := flag.Int("redis_port", 46379, "Redis Port")
 	// debug := flag.Bool("debug", false, "Debug flag")
 	prometheus := flag.Bool("prometheus", false, "Enable prometheus")
+
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
+
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	flag.Parse()
 
