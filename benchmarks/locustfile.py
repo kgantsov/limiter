@@ -52,8 +52,8 @@ class LimiterHTTPBehavior(TaskSet):
     @task(1)
     def get_tokens_http(self):
         response = self.client.get(
-            '/API/v1/limiter/user_{}/1000/1/1000/1/'.format(self.user_id),
-            name='/API/v1/limiter/test/1000/1/1000/1/'
+            '/API/v1/rate-limiters/user_{}/1000/1/1000/1/'.format(self.user_id),
+            name='/API/v1/rate-limiters/test/1000/1/1000/1/'
         )
 
         assert response.status_code == 200, response.text
@@ -61,10 +61,10 @@ class LimiterHTTPBehavior(TaskSet):
     @task(1)
     def get_tokens_http_(self):
         response = self.client.get(
-            '/API/v1/limiter/user_{}_endpoint_{}/1000/1/1000/1/'.format(
+            '/API/v1/rate-limiters/user_{}_endpoint_{}/1000/1/1000/1/'.format(
                 self.user_id, random.randint(1, 1000000)
             ),
-            name='/API/v1/limiter/test/1000/1/1000/1/'
+            name='/API/v1/rate-limiters/test/1000/1/1000/1/'
         )
 
         assert response.status_code == 200, response.text
