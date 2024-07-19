@@ -28,7 +28,8 @@ func TestServerBasic(t *testing.T) {
 	}
 
 	go func() {
-		ListenAndServe(port, app.RateLimiter, false)
+		server := NewServer(port, app.RateLimiter, false)
+		server.ListenAndServe()
 	}()
 
 	time.Sleep(3 * time.Second)

@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -32,7 +34,23 @@ func main() {
 		*httpPort, rateLimiter, make(map[string]string), *prometheus,
 	)
 
-	go redis_server.ListenAndServe(*redisPort, app.RateLimiter, *prometheus)
-	// http_server.ListenAndServe(app, *httpPort, *debug)
+	server := redis_server.NewServer(*redisPort, app.RateLimiter, *prometheus)
+	go server.ListenAndServe()
+
+	sigs := make(chan os.Signal, 1)
+
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigs
+		log.Info().Msgf("Received a signal: %d", sig)
+
+		log.Info().Msg("Stopping the application")
+
+		server.Stop()
+
+		os.Exit(0)
+	}()
+
 	app.Start()
 }
