@@ -86,8 +86,8 @@ func (h *Handler) RegisterRoutes(api huma.API) {
 		api,
 		huma.Operation{
 			OperationID: "rate-limiter-reduce",
-			Method:      http.MethodPost,
-			Path:        "/rate-limiters/:key/:max_tokens/:refill_time/:refill_amount/:tokens/",
+			Method:      http.MethodGet,
+			Path:        "/API/v1/rate-limiters/:key/:max_tokens/:refill_time/:refill_amount/:tokens/",
 			Summary:     "Reduce and get tokens",
 			Description: "Reduce the number of tokens in the bucket and get the number of tokens left",
 			Tags:        []string{"Rate Limiter"},
