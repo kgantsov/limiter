@@ -18,14 +18,21 @@ import (
 func main() {
 	httpPort := flag.Int("http_port", 9000, "HTTP Port")
 	redisPort := flag.Int("redis_port", 46379, "Redis Port")
-	// debug := flag.Bool("debug", false, "Debug flag")
+	debug := flag.Bool("debug", false, "Debug flag")
 	prometheus := flag.Bool("prometheus", false, "Enable prometheus")
+
+	flag.Parse()
 
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
 
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	// Default level for this example is info, unless debug flag is present
+	log.Info().Msgf("Starting the application port: %d debug: %v", *httpPort, *debug)
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	if *debug {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	}
 
-	flag.Parse()
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	rateLimiter := limiter.NewRateLimiter()
 	go rateLimiter.StartCleanUpFullBuckets()
