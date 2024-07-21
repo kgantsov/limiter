@@ -34,20 +34,28 @@ func NewProto(Metrics *Metrics, rateLimiter *limiter.RateLimiter, reader io.Read
 }
 
 func (p *Proto) HandleRequest() {
+	p.Metrics.connections.Inc()
+	defer func() {
+		p.Metrics.connections.Dec()
+	}()
+
 	for {
 		cmd, err := p.parser.ParseCommand()
 		start := time.Now()
+		p.Metrics.requestInFlight.Inc()
 		status := "OK"
-		// log.Debug().Msgf("Received command: %v", cmd)
+
+		log.Debug().Msgf("Received command: %v", cmd)
 
 		if err != nil {
 			if err == io.EOF {
 				log.Debug().Msg("Client has been disconnected")
+				p.Metrics.requestInFlight.Dec()
 				return
 			} else {
 				p.responser.SendError(err)
 			}
-
+			p.Metrics.requestInFlight.Dec()
 			return
 		}
 
@@ -55,55 +63,9 @@ func (p *Proto) HandleRequest() {
 		case "HELLO":
 			p.responser.SendArr([]string{})
 		case "REDUCE":
-			var maxTokens, refillTime, refillAmount, tokens int64
-			if len(cmd.Args) < 1 {
-				p.responser.SendError(fmt.Errorf("REDUCE expects 5 argument"))
-				status = "ARGUMENT_ERROR"
-				continue
-			}
-
-			key := cmd.Args[0]
-
-			if val, err := strconv.ParseInt(cmd.Args[1], 10, 64); err == nil {
-				maxTokens = val
-			} else {
-				p.responser.SendError(fmt.Errorf("REDUCE expects maxTokens to be integer"))
-				status = "ARGUMENT_ERROR"
-				continue
-			}
-
-			if val, err := strconv.ParseInt(cmd.Args[2], 10, 64); err == nil {
-				refillTime = val
-			} else {
-				p.responser.SendError(fmt.Errorf("REDUCE expects refillTime to be integer"))
-				status = "ARGUMENT_ERROR"
-				continue
-			}
-
-			if val, err := strconv.ParseInt(cmd.Args[3], 10, 64); err == nil {
-				refillAmount = val
-			} else {
-				p.responser.SendError(fmt.Errorf("REDUCE expects refillAmount to be integer"))
-				status = "ARGUMENT_ERROR"
-				continue
-			}
-
-			if val, err := strconv.ParseInt(cmd.Args[4], 10, 64); err == nil {
-				tokens = val
-			} else {
-				p.responser.SendError(fmt.Errorf("REDUCE expects tokens to be integer"))
-				status = "ARGUMENT_ERROR"
-				continue
-			}
-
-			tokensLeft, err := p.rateLimiter.Reduce(
-				key, maxTokens, refillTime, refillAmount, tokens,
-			)
-
-			if err == nil {
-				p.responser.SendInt(tokensLeft)
-			} else {
-				p.responser.SendError(err)
+			status, err = p.handleReduceRequest(cmd)
+			if err != nil {
+				status = "ERROR"
 			}
 		case "PING":
 			p.responser.SendPong()
@@ -111,10 +73,67 @@ func (p *Proto) HandleRequest() {
 			p.responser.SendError(fmt.Errorf("unknown command '%s'", cmd.Args))
 			status = "UNKNOWN_COMMAND"
 		}
-		if p.Metrics != nil {
-			elapsed := float64(time.Since(start)) / float64(time.Second)
-			p.Metrics.reqDurations.Observe(elapsed)
-			p.Metrics.reqCount.WithLabelValues(status).Inc()
-		}
+		elapsed := float64(time.Since(start)) / float64(time.Second)
+		p.Metrics.requestDuration.WithLabelValues(status).Observe(elapsed)
+		p.Metrics.requestsTotal.WithLabelValues(status).Inc()
+		p.Metrics.requestInFlight.Dec()
 	}
+}
+
+func (p *Proto) handleReduceRequest(cmd *Command) (string, error) {
+	var status string
+	var maxTokens, refillTime, refillAmount, tokens int64
+	if len(cmd.Args) < 1 {
+		p.responser.SendError(fmt.Errorf("REDUCE expects 5 argument"))
+		status = "ARGUMENT_ERROR"
+		return status, fmt.Errorf("REDUCE expects 5 argument")
+	}
+
+	key := cmd.Args[0]
+
+	if val, err := strconv.ParseInt(cmd.Args[1], 10, 64); err == nil {
+		maxTokens = val
+	} else {
+		p.responser.SendError(fmt.Errorf("REDUCE expects maxTokens to be integer"))
+		status = "ARGUMENT_ERROR"
+		return status, fmt.Errorf("REDUCE expects maxTokens to be integer")
+	}
+
+	if val, err := strconv.ParseInt(cmd.Args[2], 10, 64); err == nil {
+		refillTime = val
+	} else {
+		p.responser.SendError(fmt.Errorf("REDUCE expects refillTime to be integer"))
+		status = "ARGUMENT_ERROR"
+		return status, fmt.Errorf("REDUCE expects refillTime to be integer")
+	}
+
+	if val, err := strconv.ParseInt(cmd.Args[3], 10, 64); err == nil {
+		refillAmount = val
+	} else {
+		p.responser.SendError(fmt.Errorf("REDUCE expects refillAmount to be integer"))
+		status = "ARGUMENT_ERROR"
+		return status, fmt.Errorf("REDUCE expects refillAmount to be integer")
+	}
+
+	if val, err := strconv.ParseInt(cmd.Args[4], 10, 64); err == nil {
+		tokens = val
+	} else {
+		p.responser.SendError(fmt.Errorf("REDUCE expects tokens to be integer"))
+		status = "ARGUMENT_ERROR"
+		return status, fmt.Errorf("REDUCE expects tokens to be integer")
+	}
+
+	tokensLeft, err := p.rateLimiter.Reduce(
+		key, maxTokens, refillTime, refillAmount, tokens,
+	)
+
+	if err != nil {
+		status = "ERROR"
+		p.responser.SendError(err)
+		return status, err
+	}
+
+	status = "OK"
+	p.responser.SendInt(tokensLeft)
+	return status, nil
 }

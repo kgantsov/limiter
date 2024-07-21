@@ -22,13 +22,12 @@ func TestServerBasic(t *testing.T) {
 	port := 56379
 
 	app := &http_server.App{
-		RateLimiter:      limiter.NewRateLimiter(),
-		PathMap:          make(map[string]string),
-		EnablePrometheus: false,
+		RateLimiter: limiter.NewRateLimiter(),
+		PathMap:     make(map[string]string),
 	}
 
 	go func() {
-		server := NewServer(port, app.RateLimiter, false)
+		server := NewServer(port, app.RateLimiter)
 		server.ListenAndServe()
 	}()
 

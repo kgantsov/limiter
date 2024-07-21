@@ -19,7 +19,6 @@ func main() {
 	httpPort := flag.Int("http_port", 9000, "HTTP Port")
 	redisPort := flag.Int("redis_port", 46379, "Redis Port")
 	debug := flag.Bool("debug", false, "Debug flag")
-	prometheus := flag.Bool("prometheus", false, "Enable prometheus")
 
 	flag.Parse()
 
@@ -38,10 +37,10 @@ func main() {
 	go rateLimiter.StartCleanUpFullBuckets()
 
 	app := http_server.NewApp(
-		*httpPort, rateLimiter, make(map[string]string), *prometheus,
+		*httpPort, rateLimiter, make(map[string]string),
 	)
 
-	server := redis_server.NewServer(*redisPort, app.RateLimiter, *prometheus)
+	server := redis_server.NewServer(*redisPort, app.RateLimiter)
 	go server.ListenAndServe()
 
 	sigs := make(chan os.Signal, 1)

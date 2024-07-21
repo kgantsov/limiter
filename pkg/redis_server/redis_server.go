@@ -12,23 +12,21 @@ import (
 )
 
 type Server struct {
-	Port             int
-	RateLimiter      *limiter.RateLimiter
-	EnablePrometheus bool
-	Metrics          *Metrics
-	TCPListener      *net.TCPListener
+	Port        int
+	RateLimiter *limiter.RateLimiter
+	Metrics     *Metrics
+	TCPListener *net.TCPListener
 
 	quit chan interface{}
 	wg   sync.WaitGroup
 }
 
-func NewServer(port int, rateLimiter *limiter.RateLimiter, enablePrometheus bool) *Server {
+func NewServer(port int, rateLimiter *limiter.RateLimiter) *Server {
 	server := &Server{
-		Port:             port,
-		RateLimiter:      rateLimiter,
-		EnablePrometheus: enablePrometheus,
-		quit:             make(chan interface{}),
-		Metrics:          NewMetrics("redis"),
+		Port:        port,
+		RateLimiter: rateLimiter,
+		quit:        make(chan interface{}),
+		Metrics:     NewMetrics("redis"),
 	}
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", fmt.Sprintf(":%d", server.Port))

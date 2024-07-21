@@ -23,16 +23,14 @@ type App struct {
 	h      *Handler
 	addr   int
 
-	RateLimiter      *limiter.RateLimiter
-	PathMap          map[string]string
-	EnablePrometheus bool
+	RateLimiter *limiter.RateLimiter
+	PathMap     map[string]string
 }
 
 func NewApp(
 	addr int,
 	RateLimiter *limiter.RateLimiter,
 	PathMap map[string]string,
-	EnablePrometheus bool,
 ) *App {
 
 	router := fiber.New()
@@ -49,13 +47,12 @@ func NewApp(
 	h.RegisterRoutes(api)
 
 	app := &App{
-		addr:             addr,
-		api:              api,
-		router:           router,
-		h:                h,
-		RateLimiter:      RateLimiter,
-		PathMap:          PathMap,
-		EnablePrometheus: EnablePrometheus,
+		addr:        addr,
+		api:         api,
+		router:      router,
+		h:           h,
+		RateLimiter: RateLimiter,
+		PathMap:     PathMap,
 	}
 
 	return app

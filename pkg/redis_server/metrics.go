@@ -5,17 +5,19 @@ import (
 )
 
 type Metrics struct {
-	reqDurations prometheus.Histogram
-	reqCount     *prometheus.CounterVec
+	requestDuration *prometheus.HistogramVec
+	requestsTotal   *prometheus.CounterVec
+	requestInFlight prometheus.Gauge
+	connections     prometheus.Gauge
 }
 
 func NewMetrics(subsystem string) *Metrics {
 	m := &Metrics{}
 
-	m.reqDurations = prometheus.NewHistogram(prometheus.HistogramOpts{
+	m.requestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Subsystem: subsystem,
-		Name:      "req_durations_seconds",
-		Help:      "Request latency distributions.",
+		Name:      "request_duration_seconds_bucket",
+		Help:      "Request latency distributions, partitioned by status code.",
 		Buckets: []float64{
 			0.000000001, // 1ns
 			0.000000002,
@@ -52,18 +54,32 @@ func NewMetrics(subsystem string) *Metrics {
 			20.0,
 			30.0,
 		},
-	})
-	prometheus.MustRegister(m.reqDurations)
+	}, []string{"status_code"})
+	prometheus.MustRegister(m.requestDuration)
 
-	m.reqCount = prometheus.NewCounterVec(
+	m.requestsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Subsystem: subsystem,
 			Name:      "requests_total",
 			Help:      "How many redis requests processed, partitioned by status code.",
 		},
-		[]string{"code"},
+		[]string{"status_code"},
 	)
-	prometheus.MustRegister(m.reqCount)
+	prometheus.MustRegister(m.requestsTotal)
+
+	m.requestInFlight = prometheus.NewGauge(prometheus.GaugeOpts{
+		Subsystem: subsystem,
+		Name:      "requests_in_progress_total",
+		Help:      "How many redis requests are currently being processed.",
+	})
+	prometheus.MustRegister(m.requestInFlight)
+
+	m.connections = prometheus.NewGauge(prometheus.GaugeOpts{
+		Subsystem: subsystem,
+		Name:      "connections_total",
+		Help:      "How many connections are currently open.",
+	})
+	prometheus.MustRegister(m.connections)
 
 	return m
 }
