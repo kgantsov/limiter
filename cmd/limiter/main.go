@@ -23,10 +23,12 @@ var (
 )
 
 func main() {
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+
 	flag.IntVar(&httpPort, "http_port", 9000, "HTTP Port")
 	flag.IntVar(&redisPort, "redis_port", 46379, "Redis Port")
 	flag.StringVar(&logMode, "log_mode", "console", "Log mode: console, stackdriver")
-	flag.StringVar(&logLevel, "log_level", "debug", "Log level")
+	flag.StringVar(&logLevel, "log_level", "info", "Log level")
 
 	flag.Parse()
 

@@ -40,7 +40,7 @@ func ConfigureLogger(mode string, level string) {
 		)
 	}
 
-	logLevel, err := zerolog.ParseLevel(level)
+	logLevel, err := zerolog.ParseLevel(strings.ToUpper(level))
 	if err != nil {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	} else {

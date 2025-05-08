@@ -51,9 +51,8 @@ func (l *RateLimiter) GetShard(key int64) *Shard {
 }
 
 func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refillAmount int64, tokens int64) (int64, error) {
-	// if log.GetLevel() == log.DebugLevel {
-	// 	defer TimeTrack(time.Now(), "RateLimiter.Reduce")
-	// }
+	defer TimeTrack(time.Now(), "RateLimiter.Reduce")
+
 	h := int64(hash(key))
 
 	shard := l.GetShard(h)
