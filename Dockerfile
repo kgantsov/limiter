@@ -1,8 +1,4 @@
-FROM golang:1.10.3 AS builder
-
-# Download and install the latest release of dep
-ADD https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64 /usr/bin/dep
-RUN chmod +x /usr/bin/dep
+FROM golang:1.23.0 AS builder
 
 # Copy the code from the host and compile it
 WORKDIR $GOPATH/src/github.com/kgantsov/limiter
