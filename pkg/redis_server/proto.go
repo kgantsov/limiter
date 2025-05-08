@@ -65,8 +65,10 @@ func (p *Proto) HandleRequest() {
 		case "REDUCE":
 			status, err = p.handleReduceRequest(cmd)
 			if err != nil {
+				log.Error().Msgf("Error handling REDUCE command: %v", err)
 				status = "ERROR"
 			}
+			log.Debug().Msgf("REDUCE command %+v returned status: %s", cmd, status)
 		case "PING":
 			p.responser.SendPong()
 		default:
@@ -135,5 +137,16 @@ func (p *Proto) handleReduceRequest(cmd *Command) (string, error) {
 
 	status = "OK"
 	p.responser.SendInt(tokensLeft)
+
+	log.Debug().Msgf(
+		"REDUCED TOKENS %s maxTokens: %d refillTime: %d refillAmount: %d tokens: %d tokensLeft: %d",
+		key,
+		maxTokens,
+		refillTime,
+		refillAmount,
+		tokens,
+		tokensLeft,
+	)
+
 	return status, nil
 }

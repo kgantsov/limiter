@@ -5,31 +5,35 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	http_server "github.com/kgantsov/limiter/pkg/http_server"
 	limiter "github.com/kgantsov/limiter/pkg/limiter"
+	logger "github.com/kgantsov/limiter/pkg/logger"
 	redis_server "github.com/kgantsov/limiter/pkg/redis_server"
 )
 
+var (
+	httpPort  int    // HTTP Port
+	redisPort int    // HTTP Port
+	logLevel  string // Log level
+	logMode   string // Log mode
+)
+
 func main() {
-	httpPort := flag.Int("http_port", 9000, "HTTP Port")
-	redisPort := flag.Int("redis_port", 46379, "Redis Port")
-	debug := flag.Bool("debug", false, "Debug flag")
+	flag.IntVar(&httpPort, "http_port", 9000, "HTTP Port")
+	flag.IntVar(&redisPort, "redis_port", 46379, "Redis Port")
+	flag.StringVar(&logMode, "log_mode", "console", "Log mode: console, stackdriver")
+	flag.StringVar(&logLevel, "log_level", "debug", "Log level")
 
 	flag.Parse()
 
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
+	logger.ConfigureLogger(logMode, logLevel)
 
 	// Default level for this example is info, unless debug flag is present
-	log.Info().Msgf("Starting the application port: %d debug: %v", *httpPort, *debug)
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	if *debug {
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	}
+	log.Info().Msgf("Starting the application port: %d", httpPort)
 
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
@@ -37,10 +41,10 @@ func main() {
 	go rateLimiter.StartCleanUpFullBuckets()
 
 	app := http_server.NewApp(
-		*httpPort, rateLimiter, make(map[string]string),
+		httpPort, rateLimiter, make(map[string]string),
 	)
 
-	server := redis_server.NewServer(*redisPort, app.RateLimiter)
+	server := redis_server.NewServer(redisPort, app.RateLimiter)
 	go server.ListenAndServe()
 
 	sigs := make(chan os.Signal, 1)
