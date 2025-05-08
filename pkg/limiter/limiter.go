@@ -1,6 +1,7 @@
 package limiter
 
 import (
+	"fmt"
 	"hash/fnv"
 	"math"
 	"sync"
@@ -53,6 +54,7 @@ func (l *RateLimiter) GetShard(key int64) *Shard {
 func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refillAmount int64, tokens int64) (int64, error) {
 	defer TimeTrack(time.Now(), "RateLimiter.Reduce")
 
+	key = fmt.Sprintf("%s:%d:%d:%d", key, maxTokens, refillTime, refillAmount)
 	h := int64(hash(key))
 
 	shard := l.GetShard(h)
