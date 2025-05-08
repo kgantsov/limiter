@@ -65,6 +65,8 @@ func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refi
 
 	now := time.Now().Unix()
 
+	log.Debug().Msgf("Bucket for key: %s found: %t now %d: %+v", key, ok, now, bucket)
+
 	if !ok {
 		value := maxTokens - tokens
 		tokensNeeded := maxTokens - value
@@ -115,6 +117,7 @@ func (l *RateLimiter) Len() int64 {
 }
 
 func (l *RateLimiter) CleanUpFullBuckets() {
+
 	for _, shard := range l.shards {
 		shard.mu.Lock()
 		for key, bucket := range shard.Buckets {
@@ -130,7 +133,11 @@ func (l *RateLimiter) CleanUpFullBuckets() {
 func (l *RateLimiter) StartCleanUpFullBuckets() {
 	for {
 		time.Sleep(60 * time.Second)
+		started := time.Now()
+
 		l.CleanUpFullBuckets()
+
+		TimeTrack(started, "StartCleanUpFullBuckets took")
 	}
 }
 
