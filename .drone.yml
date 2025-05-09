@@ -26,6 +26,19 @@ steps:
       - tag
 
 
+- name: build
+  image: golang:1.23.0
+  volumes:
+  - name: deps
+    path: /go
+  commands:
+    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/limiter cmd/server/main.go
+    - tar -czf dist/limiter-${DRONE_TAG##v}-linux-amd64.tar.gz dist/limiter
+    - rm -f dist/limiter
+  when:
+    event:
+      - tag
+
 - name: build and push the service
   image: plugins/docker
   settings:

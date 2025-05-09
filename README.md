@@ -1,6 +1,6 @@
 # limiter
 
-![Build status](http://thekoss.ml:8000/api/badges/kgantsov/limiter/status.svg) 
+[![Build Status](https://drone.coroutine.dev/api/badges/kgantsov/limiter/status.svg)](https://drone.coroutine.dev/kgantsov/limiter) [![Go Report](https://goreportcard.com/badge/github.com/kgantsov/limiter)](https://goreportcard.com/report/github.com/kgantsov/limiter)
 
 Limiter is a rate limiter application that has http and redis interfaces
 
