@@ -84,7 +84,7 @@ func (h *Handler) RegisterRoutes(api huma.API) {
 		huma.Operation{
 			OperationID: "rate-limiter-reduce",
 			Method:      http.MethodGet,
-			Path:        "/API/v1/rate-limiters/:key/:max_tokens/:refill_time/:refill_amount/:tokens/",
+			Path:        "/API/v1/rate-limiters/{key}/{max_tokens}/{refill_time}/{refill_amount}/{tokens}/",
 			Summary:     "Reduce and get tokens",
 			Description: "Reduce the number of tokens in the bucket and get the number of tokens left",
 			Tags:        []string{"Rate Limiter"},
@@ -96,7 +96,7 @@ func (h *Handler) RegisterRoutes(api huma.API) {
 		huma.Operation{
 			OperationID: "rate-limiter-delete",
 			Method:      http.MethodDelete,
-			Path:        "/API/v1/rate-limiters/:key",
+			Path:        "/API/v1/rate-limiters/{key}",
 			Summary:     "Delete the key",
 			Description: "Delete the key from the rate limiter",
 			Tags:        []string{"Rate Limiter"},
