@@ -32,7 +32,7 @@ steps:
   - name: deps
     path: /go
   commands:
-    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/limiter cmd/server/main.go
+    - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/limiter cmd/limiter/main.go
     - tar -czf dist/limiter-${DRONE_TAG##v}-linux-amd64.tar.gz dist/limiter
     - rm -f dist/limiter
   when:
