@@ -55,6 +55,7 @@ func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refi
 	defer TimeTrack(time.Now(), "RateLimiter.Reduce")
 
 	key = fmt.Sprintf("%s:%d:%d:%d", key, maxTokens, refillTime, refillAmount)
+
 	h := int64(hash(key))
 
 	shard := l.GetShard(h)
@@ -147,10 +148,15 @@ func (l *RateLimiter) Remove(key string) {
 	shard := l.GetShard(h)
 
 	shard.mu.Lock()
-	delete(shard.Buckets, key)
+	_, existed := shard.Buckets[key]
+	if existed {
+		delete(shard.Buckets, key)
+	}
 	shard.mu.Unlock()
 
-	atomic.AddInt64(&l.length, -1)
+	if existed {
+		atomic.AddInt64(&l.length, -1)
+	}
 }
 
 func TimeTrack(start time.Time, name string) {
