@@ -51,10 +51,12 @@ func (l *RateLimiter) GetShard(key int64) *Shard {
 	return l.shards[uint64(key)%SHARDS]
 }
 
-func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refillAmount int64, tokens int64) (int64, error) {
-	defer TimeTrack(time.Now(), "RateLimiter.Reduce")
+func (l *RateLimiter) getKey(key string, maxTokens int64, refillTime int64, refillAmount int64) string {
+	return fmt.Sprintf("%s:%d:%d:%d", key, maxTokens, refillTime, refillAmount)
+}
 
-	key = fmt.Sprintf("%s:%d:%d:%d", key, maxTokens, refillTime, refillAmount)
+func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refillAmount int64, tokens int64) (int64, error) {
+	key = l.getKey(key, maxTokens, refillTime, refillAmount)
 
 	h := int64(hash(key))
 
@@ -66,8 +68,6 @@ func (l *RateLimiter) Reduce(key string, maxTokens int64, refillTime int64, refi
 	bucket, ok := shard.Buckets[key]
 
 	now := time.Now().Unix()
-
-	log.Debug().Msgf("Bucket for key: %s found: %t now %d: %+v", key, ok, now, bucket)
 
 	if !ok {
 		value := maxTokens - tokens
@@ -119,7 +119,6 @@ func (l *RateLimiter) Len() int64 {
 }
 
 func (l *RateLimiter) CleanUpFullBuckets() {
-
 	for _, shard := range l.shards {
 		shard.mu.Lock()
 		for key, bucket := range shard.Buckets {
@@ -143,7 +142,9 @@ func (l *RateLimiter) StartCleanUpFullBuckets() {
 	}
 }
 
-func (l *RateLimiter) Remove(key string) {
+func (l *RateLimiter) Remove(key string, maxTokens int64, refillTime int64, refillAmount int64) {
+	key = l.getKey(key, maxTokens, refillTime, refillAmount)
+
 	h := int64(hash(key))
 	shard := l.GetShard(h)
 

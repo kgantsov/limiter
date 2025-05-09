@@ -74,6 +74,24 @@ func TestRateLimiterWithManyKeys(t *testing.T) {
 	}
 }
 
+func TestRateLimiterReuseTheSameKey(t *testing.T) {
+
+	rl := NewRateLimiter()
+
+	val, _ := rl.Reduce("user:123", 1000, 1, 50, 1)
+	assert.Equal(t, int64(999), val)
+	val, _ = rl.Reduce("user:123", 1000, 1, 50, 1)
+	assert.Equal(t, int64(998), val)
+	val, _ = rl.Reduce("user:123", 1000, 1, 50, 1)
+	assert.Equal(t, int64(997), val)
+
+	val, _ = rl.Reduce("user:123", 50, 1, 50, 1)
+	assert.Equal(t, int64(49), val)
+
+	val, _ = rl.Reduce("user:123", 1000, 1, 50, 1)
+	assert.Equal(t, int64(996), val)
+}
+
 func TestRateLimiterD(t *testing.T) {
 	rl := NewRateLimiter()
 

@@ -96,7 +96,7 @@ func (h *Handler) RegisterRoutes(api huma.API) {
 		huma.Operation{
 			OperationID: "rate-limiter-delete",
 			Method:      http.MethodDelete,
-			Path:        "/API/v1/rate-limiters/{key}",
+			Path:        "/API/v1/rate-limiters/{key}/{max_tokens}/{refill_time}/{refill_amount}/",
 			Summary:     "Delete the key",
 			Description: "Delete the key from the rate limiter",
 			Tags:        []string{"Rate Limiter"},
@@ -108,7 +108,7 @@ func (h *Handler) RegisterRoutes(api huma.API) {
 		huma.Operation{
 			OperationID: "rate-limiter-get-stats",
 			Method:      http.MethodGet,
-			Path:        "/API/v1/rate-limiters/stats",
+			Path:        "/API/v1/rate-limiters/stats/",
 			Summary:     "Stats of the rate limiter",
 			Description: "Return the stats of the rate limiter service",
 			Tags:        []string{"Rate Limiter"},

@@ -20,7 +20,10 @@ type ReduceResponse struct {
 }
 
 type RemoveRequest struct {
-	Key string `path:"key" maxLength:"1024" example:"user:1" doc:"Key for the lock"`
+	Key          string `path:"key" maxLength:"1024" example:"user:1" doc:"Key for the lock"`
+	MaxTokens    int64  `path:"max_tokens" minimum:"1" example:"1000" doc:"Maximum number of tokens in the bucket"`
+	RefillTime   int64  `path:"refill_time" minimum:"1" example:"60" doc:"Time in seconds to refill the bucket"`
+	RefillAmount int64  `path:"refill_amount" minimum:"1" example:"100" doc:"Number of tokens to refill the bucket"`
 }
 
 type RemoveResponse struct {

@@ -18,10 +18,8 @@ type (
 )
 
 func (h *Handler) Reduce(ctx context.Context, input *ReduceRequest) (*ReduceResponse, error) {
-	key := input.Key
-
 	val, err := h.RateLimiter.Reduce(
-		key, input.MaxTokens, input.RefillTime, input.RefillAmount, input.Tokens,
+		input.Key, input.MaxTokens, input.RefillTime, input.RefillAmount, input.Tokens,
 	)
 
 	if err != nil {
@@ -40,9 +38,9 @@ func (h *Handler) Reduce(ctx context.Context, input *ReduceRequest) (*ReduceResp
 }
 
 func (h *Handler) Remove(ctx context.Context, input *RemoveRequest) (*RemoveResponse, error) {
-	key := input.Key
-
-	h.RateLimiter.Remove(key)
+	h.RateLimiter.Remove(
+		input.Key, input.MaxTokens, input.RefillTime, input.RefillAmount,
+	)
 
 	res := &RemoveResponse{Status: http.StatusOK}
 	res.Body.Status = "OK"
