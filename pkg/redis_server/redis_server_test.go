@@ -22,7 +22,7 @@ func TestServerBasic(t *testing.T) {
 	port := 56379
 
 	app := &http_server.App{
-		RateLimiter: limiter.NewRateLimiter(),
+		RateLimiter: limiter.NewRateLimiter(300 * time.Second),
 		PathMap:     make(map[string]string),
 	}
 

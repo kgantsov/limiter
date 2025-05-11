@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -20,6 +21,8 @@ var (
 	redisPort int    // HTTP Port
 	logLevel  string // Log level
 	logMode   string // Log mode
+
+	cleanUpBucketsInterval = 300 // Clean up buckets interval in seconds
 )
 
 func main() {
@@ -29,6 +32,7 @@ func main() {
 	flag.IntVar(&redisPort, "redis_port", 46379, "Redis Port")
 	flag.StringVar(&logMode, "log_mode", "console", "Log mode: console, stackdriver")
 	flag.StringVar(&logLevel, "log_level", "info", "Log level")
+	flag.IntVar(&cleanUpBucketsInterval, "cleanup_interval", 300, "Clean up buckets interval in seconds")
 
 	flag.Parse()
 
@@ -39,7 +43,7 @@ func main() {
 
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
-	rateLimiter := limiter.NewRateLimiter()
+	rateLimiter := limiter.NewRateLimiter(time.Duration(cleanUpBucketsInterval) * time.Second)
 	go rateLimiter.StartCleanUpFullBuckets()
 
 	app := http_server.NewApp(

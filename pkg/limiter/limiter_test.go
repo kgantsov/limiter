@@ -10,7 +10,7 @@ import (
 
 func TestSlowRateLimiter(t *testing.T) {
 
-	rl := NewRateLimiter()
+	rl := NewRateLimiter(300 * time.Second)
 
 	val, _ := rl.Reduce("login", 5, 2, 5, 1)
 	assert.Equal(t, int64(4), val)
@@ -46,7 +46,7 @@ func TestSlowRateLimiter(t *testing.T) {
 
 func TestFastRateLimiter(t *testing.T) {
 
-	rl := NewRateLimiter()
+	rl := NewRateLimiter(300 * time.Second)
 
 	for i := 999; i >= 0; i-- {
 		val, _ := rl.Reduce("api_call", 1000, 1, 1000, 1)
@@ -66,7 +66,7 @@ func TestFastRateLimiter(t *testing.T) {
 }
 
 func TestRateLimiterWithManyKeys(t *testing.T) {
-	rl := NewRateLimiter()
+	rl := NewRateLimiter(300 * time.Second)
 
 	for i := 1000_000; i >= 0; i-- {
 		val, _ := rl.Reduce(fmt.Sprintf("api_call:%d", i), 1000, 1, 1000, 1)
@@ -76,7 +76,7 @@ func TestRateLimiterWithManyKeys(t *testing.T) {
 
 func TestRateLimiterReuseTheSameKey(t *testing.T) {
 
-	rl := NewRateLimiter()
+	rl := NewRateLimiter(300 * time.Second)
 
 	val, _ := rl.Reduce("user:123", 1000, 1, 50, 1)
 	assert.Equal(t, int64(999), val)
@@ -93,7 +93,7 @@ func TestRateLimiterReuseTheSameKey(t *testing.T) {
 }
 
 func TestRateLimiterD(t *testing.T) {
-	rl := NewRateLimiter()
+	rl := NewRateLimiter(300 * time.Second)
 
 	val, _ := rl.Reduce("api_call", 100, 1, 10, 10)
 	assert.Equal(t, int64(90), val)
@@ -107,7 +107,7 @@ func TestRateLimiterD(t *testing.T) {
 }
 
 func TestCleanUpFullBuckets(t *testing.T) {
-	rl := NewRateLimiter()
+	rl := NewRateLimiter(300 * time.Second)
 
 	assert.Equal(t, int64(0), rl.Len())
 

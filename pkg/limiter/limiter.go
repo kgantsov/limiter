@@ -27,10 +27,13 @@ type Shard struct {
 type RateLimiter struct {
 	shards []*Shard
 	length int64
+
+	cleanUpBucketsInterval time.Duration
 }
 
-func NewRateLimiter() *RateLimiter {
+func NewRateLimiter(cleanUpBucketsInterval time.Duration) *RateLimiter {
 	rateLimiter := new(RateLimiter)
+	rateLimiter.cleanUpBucketsInterval = cleanUpBucketsInterval
 
 	rateLimiter.shards = make([]*Shard, SHARDS)
 
@@ -133,7 +136,7 @@ func (l *RateLimiter) CleanUpFullBuckets() {
 
 func (l *RateLimiter) StartCleanUpFullBuckets() {
 	for {
-		time.Sleep(60 * time.Second)
+		time.Sleep(l.cleanUpBucketsInterval)
 		started := time.Now()
 
 		l.CleanUpFullBuckets()

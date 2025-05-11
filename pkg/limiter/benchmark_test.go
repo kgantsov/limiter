@@ -9,7 +9,7 @@ import (
 
 func BenchmarkReduce_100_1000_1_1000_1(b *testing.B) {
 	numberOfKeys := 1000
-	rl := NewRateLimiter()
+	rl := NewRateLimiter(300 * time.Second)
 
 	b.RunParallel(func(pb *testing.PB) {
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -22,7 +22,7 @@ func BenchmarkReduce_100_1000_1_1000_1(b *testing.B) {
 }
 func BenchmarkReduce_10000000_1000_10_1000_10(b *testing.B) {
 	numberOfKeys := 10000000
-	rl := NewRateLimiter()
+	rl := NewRateLimiter(300 * time.Second)
 
 	b.RunParallel(func(pb *testing.PB) {
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
